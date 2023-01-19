@@ -1,0 +1,10 @@
+[package]
+name = "cargo-swift"
+description = "WIP"
+version = "0.0.0"
+edition = "2021"
+author = "Antonius Naumann"
+license = "MIT OR Apache-2.0"
+
+[dependencies]
+clap = { version = "4.1.1", features = ["derive"] }
