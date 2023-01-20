@@ -8,3 +8,4 @@ license = "MIT OR Apache-2.0"
 
 [dependencies]
 clap = { version = "4.1.1", features = ["derive"] }
+swift-bridge-build = "0.1.46"

@@ -1,3 +1,4 @@
+use cargo_swift::*;
 use clap::{Parser, Subcommand, ValueEnum};
 
 #[derive(Parser, Debug)]
