@@ -3,7 +3,7 @@ name = "cargo-swift"
 description = "WIP"
 version = "0.0.0"
 edition = "2021"
-author = "Antonius Naumann"
+authors = ["Antonius Naumann <git@antonius.dev>"]
 license = "MIT OR Apache-2.0"
 
 [dependencies]
