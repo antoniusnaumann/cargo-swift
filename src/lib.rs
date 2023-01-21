@@ -1,7 +1,12 @@
 pub mod command;
-pub mod targets;
+pub mod commands {
+    pub mod init;
+    pub mod package;
+}
 pub mod spinners;
+pub mod targets;
 
 pub use command::*;
-pub use targets::*;
+pub use commands::*;
 pub use spinners::*;
+pub use targets::*;
