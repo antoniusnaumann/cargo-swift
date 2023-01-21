@@ -6,40 +6,46 @@ use crate::{CommandInfo, Target};
 
 const TICK_RATE: Duration = Duration::from_millis(30);
 
-#[derive(Clone)]
-pub struct TargetSpinner {
-    inner: ProgressBar,
-    target: Target,
+fn main_spinner_style() -> ProgressStyle {
+    ProgressStyle::with_template(" {spinner:.bold.dim}   {wide_msg}").unwrap()
 }
 
-impl TargetSpinner {
+fn main_spinner_finish_style() -> ProgressStyle {
+    ProgressStyle::with_template("{prefix:.bold.green} {wide_msg:.bold}").unwrap()
+}
+
+#[derive(Clone)]
+pub struct MainSpinner {
+    inner: ProgressBar,
+}
+
+impl MainSpinner {
     pub fn with_target(target: Target) -> Self {
-        let spinner_style =
-            ProgressStyle::with_template(" {spinner:.bold.dim}   {wide_msg}").unwrap();
+        Self::with_message(format!("Building target {}...", target.display_name()))
+    }
+
+    pub fn with_message(msg: String) -> Self {
+        let spinner_style = main_spinner_style();
 
         let inner = ProgressBar::new_spinner()
             .with_style(spinner_style)
-            .with_message(format!("Building target {}...", target.display_name()));
+            .with_message(msg);
         inner.enable_steady_tick(TICK_RATE);
 
-        Self { inner, target }
+        Self { inner }
     }
 
     pub fn finish(&self) {
-        let spinner_finish_style =
-            ProgressStyle::with_template("{prefix:.bold.green} {wide_msg:.bold}").unwrap();
+        let spinner_finish_style = main_spinner_finish_style();
 
         self.inner.set_style(spinner_finish_style.clone());
         self.inner.set_prefix("DONE");
-        self.inner.finish_with_message(format!(
-            "Successfully built target {}",
-            self.target.display_name()
-        ))
+        self.inner.finish();
     }
 }
 
-impl From<TargetSpinner> for ProgressBar {
-    fn from(outer: TargetSpinner) -> Self {
+impl From<MainSpinner> for ProgressBar {
+    fn from(outer: MainSpinner) -> Self {
         outer.inner
     }
 }

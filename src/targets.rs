@@ -12,11 +12,13 @@ pub enum Target {
     Single {
         architecture: &'static str,
         display_name: &'static str,
+        platform: ApplePlatform,
     },
     Universal {
         universal_name: &'static str,
         architectures: Vec<&'static str>,
         display_name: &'static str,
+        platform: ApplePlatform,
     },
 }
 
@@ -33,12 +35,8 @@ impl Target {
         let mode = "debug";
         match self {
             Target::Single { .. } => vec![],
-            Target::Universal {
-                universal_name,
-                architectures,
-                ..
-            } => {
-                let path = format!("./target/{universal_name}/{mode}");
+            Target::Universal { architectures, .. } => {
+                let path = self.framework_directory();
 
                 let target_name = format!("lib{}.a", crate_name.replace('-', "_"));
                 let component_paths: Vec<_> = architectures
@@ -46,7 +44,7 @@ impl Target {
                     .map(|arch| format!("./target/{arch}/{mode}/{target_name}"))
                     .collect();
                 let args = component_paths.join(" ");
-                let target_path = format!("{path}/{target_name}");
+                let target_path = self.framework_path(crate_name);
 
                 let make_dir = command(format!("mkdir -p {path}"));
                 let lipo = command(format!("lipo {args} -create -output {target_path}"));
@@ -83,6 +81,30 @@ impl Target {
             Target::Universal { display_name, .. } => display_name,
         }
     }
+
+    pub fn platform(&self) -> ApplePlatform {
+        match self {
+            Target::Single { platform, .. } => *platform,
+            Target::Universal { platform, .. } => *platform,
+        }
+    }
+
+    pub fn framework_directory(&self) -> String {
+        // TODO: Make this configurable
+        let mode = "debug";
+        match self {
+            Target::Single { architecture, .. } => format!("./target/{architecture}/{mode}"),
+            Target::Universal { universal_name, .. } => format!("./target/{universal_name}/{mode}"),
+        }
+    }
+
+    pub fn framework_path(&self, crate_name: &str) -> String {
+        format!(
+            "{}/lib{}.a",
+            self.framework_directory(),
+            crate_name.replace('-', "_")
+        )
+    }
 }
 
 impl TargetInfo for ApplePlatform {
@@ -92,16 +114,19 @@ impl TargetInfo for ApplePlatform {
             IOS => Target::Single {
                 architecture: "aarch64-apple-ios",
                 display_name: "iOS",
+                platform: *self,
             },
             Simulator => Target::Universal {
                 universal_name: "universal-ios",
                 architectures: vec!["x86_64-apple-ios", "aarch64-apple-ios-sim"],
                 display_name: "iOS Simulator",
+                platform: *self,
             },
             MacOS => Target::Universal {
                 universal_name: "universal-macos",
                 architectures: vec!["x86_64-apple-darwin", "aarch64-apple-darwin"],
                 display_name: "macOS",
+                platform: *self,
             },
             MacCatalyst => {
                 unimplemented!("No official Rust target for platform \"Mac Catalyst\"!")
@@ -110,6 +135,7 @@ impl TargetInfo for ApplePlatform {
                 universal_name: "universal-tvos",
                 architectures: vec!["aarch64-apple-tvos", "x86_64-apple-tvos"],
                 display_name: "tvOS",
+                platform: *self,
             },
             WatchOS => {
                 unimplemented!("No official Rust target for platform \"watchOS\"!")
