@@ -2,6 +2,8 @@ use std::path::PathBuf;
 
 use cargo_toml::Manifest;
 use clap::*;
+use convert_case::{Case, Casing};
+use dialoguer::{theme::ColorfulTheme, Input, MultiSelect};
 use execute::Execute;
 use indicatif::MultiProgress;
 use swift_bridge_build::{create_package, parse_bridges, ApplePlatform, CreatePackageConfig};
@@ -13,10 +15,10 @@ pub fn run(platforms: Option<Vec<Platform>>, package_name: Option<String>) {
     let manifest =
         Manifest::from_path("./Cargo.toml").expect("Could not find Cargo.toml in this directory!");
 
-    let platforms = platforms.unwrap_or_else(|| todo!("TODO: Interactive prompt!"));
-    // TODO: Prompt this but suggest default name based on crate name
-    let package_name = package_name.unwrap_or_else(|| todo!("Prompt!"));
     let crate_name = manifest.package.unwrap().name.to_lowercase();
+    let platforms = platforms.unwrap_or_else(|| prompt_platforms());
+    // TODO: Prompt this but suggest default name based on crate name
+    let package_name = package_name.unwrap_or_else(|| prompt_package_name(&crate_name));
 
     if platforms.is_empty() {
         eprintln!("At least 1 platform needs to be selected!");
@@ -56,6 +58,43 @@ impl Platform {
             Platform::Watchos => vec![ApplePlatform::WatchOS],
         }
     }
+
+    fn display_name(&self) -> &'static str {
+        match self {
+            Platform::Macos => "macOS",
+            Platform::Ios => "iOS",
+            Platform::Tvos => "tvOS",
+            Platform::Watchos => "watchOS",
+        }
+    }
+
+    fn all() -> Vec<Self> {
+        vec![Self::Macos, Self::Ios, Self::Tvos, Self::Watchos]
+    }
+}
+
+fn prompt_platforms() -> Vec<Platform> {
+    let platforms = Platform::all();
+    let items: Vec<_> = platforms.iter().map(|p| p.display_name()).collect();
+
+    let chosen: Vec<usize> = MultiSelect::with_theme(&ColorfulTheme::default())
+        .items(&items)
+        .with_prompt("Select Target Platforms")
+        .defaults(&vec![true, true, true, false])
+        .interact()
+        .unwrap();
+
+    chosen.into_iter().map(|i| platforms[i]).collect()
+}
+
+fn prompt_package_name(crate_name: &str) -> String {
+    let default = crate_name.to_case(Case::UpperCamel);
+
+    Input::with_theme(&ColorfulTheme::default())
+        .with_prompt("Swift Package Name")
+        .default(default)
+        .interact_text()
+        .unwrap()
 }
 
 fn generate_bridge_with_output(crate_name: &str) {
@@ -99,8 +138,6 @@ fn create_package_with_output(targets: &[Target], crate_name: &str, package_name
         out_dir: package_name.into(),
         package_name: package_name.into(),
     };
-
-    println!("");
 
     let spinner = MainSpinner::with_message(format!("Creating Swift Package '{package_name}'..."));
     create_package(config);

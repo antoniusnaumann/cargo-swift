@@ -7,11 +7,11 @@ use crate::{CommandInfo, Target};
 const TICK_RATE: Duration = Duration::from_millis(30);
 
 fn main_spinner_style() -> ProgressStyle {
-    ProgressStyle::with_template(" {spinner:.bold.dim}   {wide_msg}").unwrap()
+    ProgressStyle::with_template("{spinner:.bold.dim} {wide_msg}").unwrap()
 }
 
 fn main_spinner_finish_style() -> ProgressStyle {
-    ProgressStyle::with_template("{prefix:.bold.green} {wide_msg:.bold}").unwrap()
+    ProgressStyle::with_template("{prefix:.green} {wide_msg:.bold}").unwrap()
 }
 
 #[derive(Clone)]
@@ -39,7 +39,7 @@ impl MainSpinner {
         let spinner_finish_style = main_spinner_finish_style();
 
         self.inner.set_style(spinner_finish_style.clone());
-        self.inner.set_prefix("DONE");
+        self.inner.set_prefix("✔");
         self.inner.finish();
     }
 }

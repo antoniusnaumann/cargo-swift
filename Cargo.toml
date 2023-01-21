@@ -9,6 +9,8 @@ license = "MIT OR Apache-2.0"
 [dependencies]
 cargo_toml = "0.14.0"
 clap = { version = "4.1.1", features = ["derive"] }
+convert_case = "0.6.0"
+dialoguer = "0.10.3"
 execute = "0.2.11"
 gag = "1.0.0"
 indicatif = "0.17.3"
