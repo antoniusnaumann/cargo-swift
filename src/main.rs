@@ -1,7 +1,10 @@
+use std::time::Duration;
+
 use cargo_swift::*;
 use cargo_toml::Manifest;
 use clap::{Parser, Subcommand, ValueEnum};
 use execute::Execute;
+use indicatif::*;
 use swift_bridge_build::ApplePlatform;
 
 #[derive(Parser, Debug)]
@@ -87,16 +90,45 @@ fn main() {
             .map(|p| p.target())
             .collect();
 
-        let commands: Vec<_> = dbg!(targets
-            .iter()
-            .flat_map(|t| t.commands(&crate_name))
-            .collect());
+        let tick_rate = Duration::from_millis(30);
 
-        for command in commands {
-            let mut command = dbg!(command);
-            command
-                .execute()
-                .expect(format!("Failed to execute build command: {}", command.info()).as_str());
+        let spinner_style =
+            ProgressStyle::with_template(" {spinner:.bold.dim}   {wide_msg}").unwrap();
+        let spinner_finish_style =
+            ProgressStyle::with_template("{prefix:.bold.green} {wide_msg}").unwrap();
+
+        let sub_spinner_style = ProgressStyle::with_template("\t{msg}").unwrap();
+        let sub_spinner_finish_style = ProgressStyle::with_template("\t{msg:.dim}").unwrap();
+
+        for target in targets {
+            let multi = MultiProgress::new();
+            let spinner = multi.add(
+                ProgressBar::new_spinner()
+                    .with_style(spinner_style.clone())
+                    .with_message(format!("Building target {}...", target.display_name())),
+            );
+            spinner.enable_steady_tick(tick_rate);
+            for mut command in target.commands(&crate_name) {
+                let sub = multi.add(
+                    ProgressBar::new_spinner()
+                        .with_style(sub_spinner_style.clone())
+                        .with_message(command.info()),
+                );
+                sub.enable_steady_tick(tick_rate);
+
+                command.execute().expect(
+                    format!("Failed to execute build command: {}", command.info()).as_str(),
+                );
+
+                sub.set_style(sub_spinner_finish_style.clone());
+                sub.finish();
+            }
+            spinner.set_style(spinner_finish_style.clone());
+            spinner.set_prefix("DONE");
+            spinner.finish_with_message(format!(
+                "Successfully built target {}!",
+                target.display_name()
+            ))
         }
 
         return;

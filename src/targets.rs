@@ -11,10 +11,12 @@ pub trait TargetInfo {
 pub enum Target {
     Single {
         architecture: &'static str,
+        display_name: &'static str,
     },
     Universal {
         universal_name: &'static str,
         architectures: Vec<&'static str>,
+        display_name: &'static str,
     },
 }
 
@@ -30,10 +32,11 @@ impl Target {
         // TODO: Make this configurable
         let mode = "debug";
         match self {
-            Target::Single { architecture: _ } => vec![],
+            Target::Single { .. } => vec![],
             Target::Universal {
                 universal_name,
                 architectures,
+                ..
             } => {
                 let path = format!("./target/{universal_name}/{mode}");
 
@@ -69,11 +72,15 @@ impl Target {
     /// The names returned here exactly match the identifiers of the respective official Rust targets.
     pub fn architectures(&self) -> Vec<&'static str> {
         match self {
-            Target::Single { architecture } => vec![architecture],
-            Target::Universal {
-                universal_name,
-                architectures,
-            } => architectures.to_owned(),
+            Target::Single { architecture, .. } => vec![architecture],
+            Target::Universal { architectures, .. } => architectures.to_owned(),
+        }
+    }
+
+    pub fn display_name(&self) -> &'static str {
+        match self {
+            Target::Single { display_name, .. } => display_name,
+            Target::Universal { display_name, .. } => display_name,
         }
     }
 }
@@ -84,14 +91,17 @@ impl TargetInfo for ApplePlatform {
         match self {
             IOS => Target::Single {
                 architecture: "aarch64-apple-ios",
+                display_name: "iOS",
             },
             Simulator => Target::Universal {
                 universal_name: "universal-ios",
                 architectures: vec!["x86_64-apple-ios", "aarch64-apple-ios-sim"],
+                display_name: "iOS Simulator",
             },
             MacOS => Target::Universal {
                 universal_name: "universal-macos",
                 architectures: vec!["x86_64-apple-darwin", "aarch64-apple-darwin"],
+                display_name: "macOS",
             },
             MacCatalyst => {
                 unimplemented!("No official Rust target for platform \"Mac Catalyst\"!")
@@ -99,6 +109,7 @@ impl TargetInfo for ApplePlatform {
             TvOS => Target::Universal {
                 universal_name: "universal-tvos",
                 architectures: vec!["aarch64-apple-tvos", "x86_64-apple-tvos"],
+                display_name: "tvOS",
             },
             WatchOS => {
                 unimplemented!("No official Rust target for platform \"watchOS\"!")
