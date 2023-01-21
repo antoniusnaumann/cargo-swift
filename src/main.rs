@@ -1,5 +1,7 @@
 use cargo_swift::*;
+use cargo_toml::Manifest;
 use clap::{Parser, Subcommand, ValueEnum};
+use execute::Execute;
 use swift_bridge_build::ApplePlatform;
 
 #[derive(Parser, Debug)]
@@ -47,7 +49,7 @@ impl Platform {
             Platform::Ios => vec![ApplePlatform::IOS, ApplePlatform::Simulator],
             Platform::Tvos => vec![ApplePlatform::TvOS],
             Platform::Watchos => vec![ApplePlatform::WatchOS],
-        } 
+        }
     }
 }
 
@@ -65,20 +67,37 @@ fn main() {
     } = args.action
     {
         println!("Package");
+        // TODO: Allow path as optional argument to take other directories than current directory
+        let manifest = Manifest::from_path("./Cargo.toml")
+            .expect("Could not find Cargo.toml in this directory!");
 
         let platforms = platforms.unwrap_or_else(|| todo!("TODO: Interactive prompt!"));
+        // TODO: Prompt this but suggest default name based on crate name
         let package_name = package_name.unwrap_or_else(|| todo!("Prompt!"));
+        let crate_name = dbg!(manifest.package.unwrap().name.to_lowercase());
 
         if platforms.is_empty() {
             eprintln!("At least 1 platform needs to be selected!");
             return;
         }
-        
+
         let targets: Vec<_> = platforms
             .into_iter()
             .flat_map(|p| p.into_apple_platforms())
+            .map(|p| p.target())
             .collect();
-        dbg!(targets);
+
+        let commands: Vec<_> = dbg!(targets
+            .iter()
+            .flat_map(|t| t.commands(&crate_name))
+            .collect());
+
+        for command in commands {
+            let mut command = dbg!(command);
+            command
+                .execute()
+                .expect(format!("Failed to execute build command: {}", command.info()).as_str());
+        }
 
         return;
     }

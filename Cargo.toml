@@ -7,6 +7,8 @@ authors = ["Antonius Naumann <git@antonius.dev>"]
 license = "MIT OR Apache-2.0"
 
 [dependencies]
+cargo_toml = "0.14.0"
 clap = { version = "4.1.1", features = ["derive"] }
 execute = "0.2.11"
+serde = { version = "1.0.152", features = ["derive"] }
 swift-bridge-build = "0.1.46"

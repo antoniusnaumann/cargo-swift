@@ -26,7 +26,7 @@ impl Target {
             .collect()
     }
 
-    fn lipo_commands(&self, crate_name: String) -> Vec<Command> {
+    fn lipo_commands(&self, crate_name: &str) -> Vec<Command> {
         // TODO: Make this configurable
         let mode = "debug";
         match self {
@@ -56,7 +56,7 @@ impl Target {
     ///
     /// This function returns a list of commands that should be executed in their given
     /// order to build this target (and bundle architecture targets with lipo if it is a universal target).
-    pub fn commands(&self, crate_name: String) -> Vec<Command> {
+    pub fn commands(&self, crate_name: &str) -> Vec<Command> {
         self.cargo_build_commands()
             .into_iter()
             .chain(self.lipo_commands(crate_name))
