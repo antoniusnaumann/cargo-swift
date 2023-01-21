@@ -45,8 +45,9 @@ pub fn run(platforms: Option<Vec<Platform>>, package_name: Option<String>) {
 pub enum Platform {
     Macos,
     Ios,
-    Tvos,
-    Watchos,
+    // Platforms below are removed until they are appropriately supported
+    //    Tvos,
+    //    Watchos,
 }
 
 impl Platform {
@@ -54,8 +55,8 @@ impl Platform {
         match self {
             Platform::Macos => vec![ApplePlatform::MacOS],
             Platform::Ios => vec![ApplePlatform::IOS, ApplePlatform::Simulator],
-            Platform::Tvos => vec![ApplePlatform::TvOS],
-            Platform::Watchos => vec![ApplePlatform::WatchOS],
+            //            Platform::Tvos => vec![ApplePlatform::TvOS],
+            //            Platform::Watchos => vec![ApplePlatform::WatchOS],
         }
     }
 
@@ -63,13 +64,18 @@ impl Platform {
         match self {
             Platform::Macos => "macOS",
             Platform::Ios => "iOS",
-            Platform::Tvos => "tvOS",
-            Platform::Watchos => "watchOS",
+            //            Platform::Tvos => "tvOS",
+            //            Platform::Watchos => "watchOS",
         }
     }
 
     fn all() -> Vec<Self> {
-        vec![Self::Macos, Self::Ios, Self::Tvos, Self::Watchos]
+        vec![
+            Self::Macos,
+            Self::Ios,
+            //    Self::Tvos,
+            //    Self::Watchos
+        ]
     }
 }
 
