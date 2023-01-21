@@ -1,5 +1,6 @@
 use cargo_swift::*;
 use clap::{Parser, Subcommand, ValueEnum};
+use swift_bridge_build::ApplePlatform;
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -30,13 +31,24 @@ enum Action {
     },
 }
 
-#[derive(ValueEnum, Clone, Debug)]
+#[derive(ValueEnum, Copy, Clone, Debug)]
 #[value()]
 enum Platform {
     Macos,
     Ios,
     Tvos,
     Watchos,
+}
+
+impl Platform {
+    fn into_apple_platforms(self) -> Vec<ApplePlatform> {
+        match self {
+            Platform::Macos => vec![ApplePlatform::MacOS],
+            Platform::Ios => vec![ApplePlatform::IOS, ApplePlatform::Simulator],
+            Platform::Tvos => vec![ApplePlatform::TvOS],
+            Platform::Watchos => vec![ApplePlatform::WatchOS],
+        } 
+    }
 }
 
 fn main() {
@@ -61,9 +73,12 @@ fn main() {
             eprintln!("At least 1 platform needs to be selected!");
             return;
         }
-
-        dbg!(platforms);
-        dbg!(package_name);
+        
+        let targets: Vec<_> = platforms
+            .into_iter()
+            .flat_map(|p| p.into_apple_platforms())
+            .collect();
+        dbg!(targets);
 
         return;
     }
