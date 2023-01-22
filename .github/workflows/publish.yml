@@ -6,13 +6,13 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     steps:
     - uses: actions/checkout@v3
     - name: Test
       run: cargo test --verbose
   publish-crates-io:
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     needs: test
     steps:
     - uses: actions/checkout@v3
