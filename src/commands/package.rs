@@ -33,6 +33,7 @@ pub fn run(platforms: Option<Vec<Platform>>, package_name: Option<String>) {
         .map(|p| p.target())
         .collect();
 
+    // TODO: Check for missing toolchains and ask user if they should be installed
     for target in &targets {
         build_with_output(target, &crate_name);
     }
