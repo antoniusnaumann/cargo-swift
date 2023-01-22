@@ -15,7 +15,7 @@ struct Args {
     action: Action,
 
     #[arg(short, long, global = true)]
-    /// Silences all output except errors
+    /// Silence all output except errors and interactive prompts
     silent: bool,
 }
 
@@ -30,16 +30,16 @@ impl From<Args> for Config {
 #[derive(Subcommand, Debug, Clone)]
 enum Action {
     #[command()]
-    /// Initializes a new Rust project that can be packaged as Swift package
+    /// Initialize a new Rust project that can be packaged as Swift package
     ///
-    /// Generates boilerplate code for setting up dependencies and bridge modules
+    /// This command generates boilerplate code for setting up dependencies and bridge modules
     Init {
         #[arg(index = 1)]
         crate_name: String,
     },
 
     #[command()]
-    /// Packages the Rust crate in the current directory as Swift package
+    /// Package Rust crate in current directory as Swift package
     ///
     Package {
         #[arg(short, long, trailing_var_arg = true, num_args = 1..=4, ignore_case = true)]
