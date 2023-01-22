@@ -1,0 +1,22 @@
+name: Publish
+on:
+  release:
+    types:
+      - published
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Test
+      run: cargo test --verbose
+  publish-crates-io:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+    - uses: actions/checkout@v3
+    - name: Publish to crates.io
+      env: 
+        CARGO_REGISTRY_TOKEN: ${{ secrets.CRATES_IO_LOGIN }}
+      run: cargo publish
+    
