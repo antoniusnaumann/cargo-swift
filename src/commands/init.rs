@@ -1,12 +1,17 @@
 use std::fs::{create_dir, write};
+use std::ops::Not;
 
 use cargo_toml::Manifest;
 use execute::{command, Execute};
 
-use crate::MainSpinner;
+use crate::Finish;
+use crate::{config::Config, MainSpinner};
 
-pub fn run(crate_name: String) {
-    let spinner = MainSpinner::with_message("Creating Rust library package...".to_owned());
+pub fn run(crate_name: String, config: Config) {
+    let spinner = config.silent.not().then_some(MainSpinner::with_message(
+        "Creating Rust library package...".to_owned(),
+    ));
+
     create_dir(&crate_name).expect("Could not create directory for crate!");
 
     let manifest = Manifest::from_str(include_str!("../../Cargo.toml")).unwrap();

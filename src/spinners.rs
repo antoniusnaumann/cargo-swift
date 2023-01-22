@@ -1,6 +1,6 @@
 use std::{process::Command, time::Duration};
 
-use indicatif::{ProgressBar, ProgressStyle};
+use indicatif::{MultiProgress, ProgressBar, ProgressStyle};
 
 use crate::{CommandInfo, Target};
 
@@ -12,6 +12,14 @@ fn main_spinner_style() -> ProgressStyle {
 
 fn main_spinner_finish_style() -> ProgressStyle {
     ProgressStyle::with_template("{prefix:.green} {wide_msg:.bold}").unwrap()
+}
+
+pub trait Spinner {
+    fn spinner(self) -> ProgressBar;
+}
+
+pub trait Finish {
+    fn finish(&self);
 }
 
 #[derive(Clone)]
@@ -34,13 +42,29 @@ impl MainSpinner {
 
         Self { inner }
     }
+}
 
-    pub fn finish(&self) {
+impl Finish for MainSpinner {
+    fn finish(&self) {
         let spinner_finish_style = main_spinner_finish_style();
 
         self.inner.set_style(spinner_finish_style.clone());
         self.inner.set_prefix("✔");
         self.inner.finish();
+    }
+}
+
+impl Finish for Option<MainSpinner> {
+    fn finish(&self) {
+        if let Some(this) = self {
+            this.finish()
+        }
+    }
+}
+
+impl Spinner for MainSpinner {
+    fn spinner(self) -> ProgressBar {
+        self.inner
     }
 }
 
@@ -65,8 +89,10 @@ impl CommandSpinner {
 
         Self { inner }
     }
+}
 
-    pub fn finish(&self) {
+impl Finish for CommandSpinner {
+    fn finish(&self) {
         let spinner_finish_style = ProgressStyle::with_template("\t{msg:.dim}").unwrap();
 
         self.inner.set_style(spinner_finish_style.clone());
@@ -74,8 +100,33 @@ impl CommandSpinner {
     }
 }
 
+impl Finish for Option<CommandSpinner> {
+    fn finish(&self) {
+        if let Some(this) = self {
+            this.finish()
+        }
+    }
+}
+
+impl Spinner for CommandSpinner {
+    fn spinner(self) -> ProgressBar {
+        self.inner
+    }
+}
+
 impl From<CommandSpinner> for ProgressBar {
     fn from(outer: CommandSpinner) -> Self {
         outer.inner
+    }
+}
+pub trait OptionalMultiProgress {
+    fn add(&self, progress: &Option<impl Spinner + Clone>);
+}
+
+impl OptionalMultiProgress for Option<MultiProgress> {
+    fn add(&self, progress: &Option<impl Spinner + Clone>) {
+        if let (Some(multi), Some(spinner)) = (self, progress) {
+            multi.add(spinner.clone().spinner());
+        }
     }
 }

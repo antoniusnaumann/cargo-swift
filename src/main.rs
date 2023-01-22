@@ -1,4 +1,4 @@
-use cargo_swift::*;
+use cargo_swift::{init, package, Config};
 use clap::{Parser, Subcommand};
 
 #[derive(Parser)]
@@ -8,14 +8,26 @@ enum Cargo {
     Swift(Args),
 }
 
-#[derive(clap::Args, Debug)]
+#[derive(clap::Args, Debug, Clone)]
 #[command(author, version, about, long_about = None)]
 struct Args {
     #[command(subcommand)]
     action: Action,
+
+    #[arg(short, long, global = true)]
+    /// Silences all output except errors
+    silent: bool,
 }
 
-#[derive(Subcommand, Debug)]
+impl From<Args> for Config {
+    fn from(args: Args) -> Self {
+        Config {
+            silent: args.silent,
+        }
+    }
+}
+
+#[derive(Subcommand, Debug, Clone)]
 enum Action {
     #[command()]
     /// Initializes a new Rust project that can be packaged as Swift package
@@ -39,13 +51,14 @@ enum Action {
 
 fn main() {
     let Cargo::Swift(args) = Cargo::parse();
+    let config = args.clone().into();
 
     match args.action {
-        Action::Init { crate_name } => init::run(crate_name),
+        Action::Init { crate_name } => init::run(crate_name, config),
 
         Action::Package {
             platforms,
             package_name,
-        } => package::run(platforms, package_name),
+        } => package::run(platforms, package_name, config),
     }
 }
