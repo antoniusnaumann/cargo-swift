@@ -11,7 +11,7 @@ pub fn run(crate_name: String) {
 
     let gitignore_content = include_str!("../../template/template.gitignore");
     let cargo_toml_content =
-        include_str!("../../template/Cargo.toml").replace("<CRATE_NAME>", &crate_name);
+        include_str!("../../template/template.toml").replace("<CRATE_NAME>", &crate_name);
     let lib_rs_content =
         include_str!("../../template/lib.rs").replace("<CARGO_SWIFT_VERSION>", cargo_swift_version);
 
