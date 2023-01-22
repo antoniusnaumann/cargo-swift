@@ -3,7 +3,10 @@ use std::fs::{create_dir, write};
 use cargo_toml::Manifest;
 use execute::{command, Execute};
 
+use crate::MainSpinner;
+
 pub fn run(crate_name: String) {
+    let spinner = MainSpinner::with_message("Creating Rust library package...".to_owned());
     create_dir(&crate_name).expect("Could not create directory for crate!");
 
     let manifest = Manifest::from_str(include_str!("../../Cargo.toml")).unwrap();
@@ -33,4 +36,6 @@ pub fn run(crate_name: String) {
         .current_dir(format!("./{crate_name}"))
         .execute_check_exit_status_code(0)
         .expect("Could not checkout branch main!");
+
+    spinner.finish();
 }
