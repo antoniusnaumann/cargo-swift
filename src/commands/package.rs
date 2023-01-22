@@ -125,10 +125,12 @@ fn build_with_output(target: &Target, crate_name: &str, silent: bool) {
         .not()
         .then(|| MainSpinner::with_target(target.clone()));
     multi.add(&spinner);
+    spinner.start();
 
     for mut command in target.commands(crate_name) {
         let step = silent.not().then(|| CommandSpinner::with_command(&command));
         multi.add(&step);
+        step.start();
 
         command
             .execute()
@@ -158,13 +160,13 @@ fn create_package_with_output(
         package_name: package_name.into(),
     };
 
-    if silent {
+    {
         let _gag = gag::Gag::stdout().unwrap();
         create_package(config);
-    } else {
+    }
+    if !silent {
         let spinner =
             MainSpinner::with_message(format!("Creating Swift Package '{package_name}'..."));
-        create_package(config);
         spinner.finish();
     }
 }

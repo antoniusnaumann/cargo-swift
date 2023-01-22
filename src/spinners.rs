@@ -18,7 +18,8 @@ pub trait Spinner {
     fn spinner(self) -> ProgressBar;
 }
 
-pub trait Finish {
+pub trait Ticking {
+    fn start(&self);
     fn finish(&self);
 }
 
@@ -38,13 +39,16 @@ impl MainSpinner {
         let inner = ProgressBar::new_spinner()
             .with_style(spinner_style)
             .with_message(msg);
-        inner.enable_steady_tick(TICK_RATE);
 
         Self { inner }
     }
 }
 
-impl Finish for MainSpinner {
+impl Ticking for MainSpinner {
+    fn start(&self) {
+        self.inner.enable_steady_tick(TICK_RATE);
+    }
+
     fn finish(&self) {
         let spinner_finish_style = main_spinner_finish_style();
 
@@ -54,7 +58,13 @@ impl Finish for MainSpinner {
     }
 }
 
-impl Finish for Option<MainSpinner> {
+impl Ticking for Option<MainSpinner> {
+    fn start(&self) {
+        if let Some(this) = self {
+            this.inner.enable_steady_tick(TICK_RATE);
+        }
+    }
+
     fn finish(&self) {
         if let Some(this) = self {
             this.finish()
@@ -91,7 +101,11 @@ impl CommandSpinner {
     }
 }
 
-impl Finish for CommandSpinner {
+impl Ticking for CommandSpinner {
+    fn start(&self) {
+        self.inner.enable_steady_tick(TICK_RATE);
+    }
+
     fn finish(&self) {
         let spinner_finish_style = ProgressStyle::with_template("\t{msg:.dim}").unwrap();
 
@@ -100,7 +114,13 @@ impl Finish for CommandSpinner {
     }
 }
 
-impl Finish for Option<CommandSpinner> {
+impl Ticking for Option<CommandSpinner> {
+    fn start(&self) {
+        if let Some(this) = self {
+            this.inner.enable_steady_tick(TICK_RATE);
+        }
+    }
+
     fn finish(&self) {
         if let Some(this) = self {
             this.finish()

@@ -4,13 +4,14 @@ use std::ops::Not;
 use cargo_toml::Manifest;
 use execute::{command, Execute};
 
-use crate::Finish;
+use crate::Ticking;
 use crate::{config::Config, MainSpinner};
 
 pub fn run(crate_name: String, config: Config) {
     let spinner = config.silent.not().then_some(MainSpinner::with_message(
         "Creating Rust library package...".to_owned(),
     ));
+    spinner.start();
 
     create_dir(&crate_name).expect("Could not create directory for crate!");
 
