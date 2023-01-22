@@ -25,7 +25,12 @@ pub fn run(crate_name: String) {
     write(format!("{}/src/lib.rs", crate_name), lib_rs_content)
         .expect("Could not write src/lib.rs!");
 
-    command!("git init -b main")
-        .execute()
+    command!("git init")
+        .current_dir(format!("./{crate_name}"))
+        .execute_check_exit_status_code(0)
         .expect("Could not initialize git repository!");
+    command!("git checkout -b main")
+        .current_dir(format!("./{crate_name}"))
+        .execute_check_exit_status_code(0)
+        .expect("Could not checkout branch main!");
 }
