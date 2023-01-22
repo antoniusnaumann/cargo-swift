@@ -95,7 +95,7 @@ impl CommandSpinner {
 
         let inner = ProgressBar::new_spinner()
             .with_style(spinner_style.clone())
-            .with_message(command.info());
+            .with_message(command.multiline_info(70).replace('\n', "\n\t\t"));
 
         Self { inner }
     }
