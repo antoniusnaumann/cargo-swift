@@ -1,3 +1,31 @@
+use std::fs::{create_dir, write};
+
+use cargo_toml::Manifest;
+use execute::{command, Execute};
+
 pub fn run(crate_name: String) {
-    todo!("Init package crate!");
+    create_dir(&crate_name).expect("Could not create directory for crate!");
+
+    let manifest = Manifest::from_str(include_str!("../../Cargo.toml")).unwrap();
+    let cargo_swift_version = manifest.package().version();
+
+    let gitignore_content = include_str!("../../template/template.gitignore");
+    let cargo_toml_content =
+        include_str!("../../template/Cargo.toml").replace("<CRATE_NAME>", &crate_name);
+    let lib_rs_content =
+        include_str!("../../template/lib.rs").replace("<CARGO_SWIFT_VERSION>", cargo_swift_version);
+
+    write(format!("{}/.gitignore", crate_name), gitignore_content)
+        .expect("Could not write .gitignore!");
+
+    write(format!("{}/Cargo.toml", crate_name), cargo_toml_content)
+        .expect("Could not write Cargo.toml!");
+
+    create_dir(format!("{}/src", crate_name)).expect("Could not create src/ directory!");
+    write(format!("{}/src/lib.rs", crate_name), lib_rs_content)
+        .expect("Could not write src/lib.rs!");
+
+    command!("git init -b main")
+        .execute()
+        .expect("Could not initialize git repository!");
 }
