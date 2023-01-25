@@ -145,6 +145,9 @@ fn create_package_with_output(
     package_name: &str,
     silent: bool,
 ) {
+    let spinner = silent
+        .not()
+        .then(|| MainSpinner::with_message(format!("Creating Swift Package '{package_name}'...")));
     // TODO: Use base path here
     let target_paths = targets
         .iter()
@@ -157,13 +160,10 @@ fn create_package_with_output(
         package_name: package_name.into(),
     };
 
-    {
-        // This is a workaround for xcodebuild -create-package not respecting the -quiet option
-        let _gag = gag::Gag::stdout().unwrap();
-        swift_bridge_build::create_package(config);
-    }
+    swift_bridge_build::create_package(config);
 
-    // Spinners break if gag is used, so the spinner will only be displayed after creating the package was already successful
+    spinner.finish();
+
     let spinner = silent.not().then(|| {
         MainSpinner::with_message(format!(
             "Successfully created Swift Package in '{package_name}/'!"
