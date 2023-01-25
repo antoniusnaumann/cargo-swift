@@ -6,7 +6,7 @@ use convert_case::{Case, Casing};
 use dialoguer::{theme::ColorfulTheme, Input, MultiSelect};
 use execute::Execute;
 use indicatif::MultiProgress;
-use swift_bridge_build::{create_package, parse_bridges, ApplePlatform, CreatePackageConfig};
+use swift_bridge_build::{ApplePlatform, CreatePackageConfig};
 
 use crate::*;
 
@@ -110,7 +110,7 @@ fn generate_bridge_with_output(crate_name: &str, silent: bool) {
         .then(|| MainSpinner::with_message(format!("Generating Swift bridging header...")));
     // TODO: Allow setting a base path here
     let out_dir = PathBuf::from("./generated");
-    let parsed = parse_bridges(vec!["./src/lib.rs"]);
+    let parsed = swift_bridge_build::parse_bridges(vec!["./src/lib.rs"]);
     parsed.write_all_concatenated(out_dir, crate_name);
 
     spinner.finish();
@@ -157,11 +157,17 @@ fn create_package_with_output(
         package_name: package_name.into(),
     };
 
-    create_package(config);
-
-    if !silent {
-        let spinner =
-            MainSpinner::with_message(format!("Creating Swift Package '{package_name}'..."));
-        spinner.finish();
+    {
+        // This is a workaround for xcodebuild -create-package not respecting the -quiet option
+        let _gag = gag::Gag::stdout().unwrap();
+        swift_bridge_build::create_package(config);
     }
+
+    // Spinners break if gag is used, so the spinner will only be displayed after creating the package was already successful
+    let spinner = silent.not().then(|| {
+        MainSpinner::with_message(format!(
+            "Successfully created Swift Package in '{package_name}/'!"
+        ))
+    });
+    spinner.finish();
 }
