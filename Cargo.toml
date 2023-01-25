@@ -13,7 +13,6 @@ clap = { version = "4.1.1", features = ["derive"] }
 convert_case = "0.6.0"
 dialoguer = { version = "0.10.3", default-features = false }
 execute = "0.2.11"
-gag = "1.0.0"
 indicatif = "0.17.3"
 serde = { version = "1.0.152", features = ["derive"] }
 swift-bridge-build = "0.1.46"

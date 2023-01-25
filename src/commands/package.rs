@@ -105,18 +105,15 @@ fn prompt_package_name(crate_name: &str) -> String {
 }
 
 fn generate_bridge_with_output(crate_name: &str, silent: bool) {
+    let spinner = silent
+        .not()
+        .then(|| MainSpinner::with_message(format!("Generating Swift bridging header...")));
     // TODO: Allow setting a base path here
     let out_dir = PathBuf::from("./generated");
-    {
-        let _gag = gag::Gag::stdout().unwrap();
-        let parsed = parse_bridges(vec!["./src/lib.rs"]);
-        parsed.write_all_concatenated(out_dir, crate_name);
-    }
+    let parsed = parse_bridges(vec!["./src/lib.rs"]);
+    parsed.write_all_concatenated(out_dir, crate_name);
 
-    if !silent {
-        let spinner = MainSpinner::with_message(format!("Generating Swift bridging header..."));
-        spinner.finish();
-    }
+    spinner.finish();
 }
 
 fn build_with_output(target: &Target, crate_name: &str, silent: bool) {
@@ -160,10 +157,8 @@ fn create_package_with_output(
         package_name: package_name.into(),
     };
 
-    {
-        let _gag = gag::Gag::stdout().unwrap();
-        create_package(config);
-    }
+    create_package(config);
+
     if !silent {
         let spinner =
             MainSpinner::with_message(format!("Creating Swift Package '{package_name}'..."));
