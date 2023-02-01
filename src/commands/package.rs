@@ -16,9 +16,9 @@ pub fn run(platforms: Option<Vec<Platform>>, package_name: Option<String>, confi
         Manifest::from_path("./Cargo.toml").expect("Could not find Cargo.toml in this directory!");
 
     let crate_name = manifest.package.unwrap().name.to_lowercase();
-    let platforms = platforms.unwrap_or_else(|| prompt_platforms());
     // TODO: Prompt this but suggest default name based on crate name
     let package_name = package_name.unwrap_or_else(|| prompt_package_name(&crate_name));
+    let platforms = platforms.unwrap_or_else(|| prompt_platforms());
 
     if platforms.is_empty() {
         eprintln!("At least 1 platform needs to be selected!");
