@@ -1,10 +1,10 @@
-use std::{ops::Not, path::PathBuf};
+use std::{ops::Not, path::PathBuf, process::Stdio};
 
 use cargo_toml::Manifest;
 use clap::*;
 use convert_case::{Case, Casing};
 use dialoguer::{theme::ColorfulTheme, Input, MultiSelect};
-use execute::Execute;
+use execute::{command, Execute};
 use indicatif::MultiProgress;
 use swift_bridge_build::{ApplePlatform, CreatePackageConfig};
 
@@ -92,6 +92,28 @@ fn prompt_platforms() -> Vec<Platform> {
         .unwrap();
 
     chosen.into_iter().map(|i| platforms[i]).collect()
+}
+
+/// Checks if toolchains for all target architectures are installed and returns a
+/// list containing the names of all missing toolchains
+fn check_installed_toolchains(targets: &[Target]) -> Vec<&'static str> {
+    let mut rustup = command!("rustup target list");
+    rustup.stdout(Stdio::piped());
+    let output = rustup
+        .execute_output()
+        .expect("Failed to check installed toolchains. Is rustup installed on your system?");
+    let output = String::from_utf8_lossy(&output.stdout);
+
+    let installed: Vec<_> = output
+        .split("\n")
+        .filter(|s| s.contains("installed"))
+        .collect();
+
+    targets
+        .iter()
+        .flat_map(|t| t.architectures())
+        .filter(|arch| installed.iter().any(|&toolchain| toolchain.contains(arch)))
+        .collect()
 }
 
 fn prompt_package_name(crate_name: &str) -> String {
