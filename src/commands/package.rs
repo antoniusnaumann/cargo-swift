@@ -1,7 +1,11 @@
-use std::{ops::Not, path::PathBuf, process::Stdio};
+use std::{
+    ops::Not,
+    path::PathBuf,
+    process::{Command, Stdio},
+};
 
 use cargo_toml::Manifest;
-use clap::*;
+use clap::ValueEnum;
 use convert_case::{Case, Casing};
 use dialoguer::{theme::ColorfulTheme, Input, MultiSelect};
 use execute::{command, Execute};
@@ -33,7 +37,7 @@ pub fn run(platforms: Option<Vec<Platform>>, package_name: Option<String>, confi
 
     let missing_toolchains = check_installed_toolchains(&targets);
     if !missing_toolchains.is_empty() {
-        prompt_toolchain_installation(&missing_toolchains)
+        prompt_toolchain_installation(&missing_toolchains, config.silent)
             .expect("Not all required toolchains installed. Aborting!");
     }
 
@@ -113,17 +117,22 @@ fn check_installed_toolchains(targets: &[Target]) -> Vec<&'static str> {
     let installed: Vec<_> = output
         .split("\n")
         .filter(|s| s.contains("installed"))
+        .map(|s| s.replace("(installed)", "").trim().to_owned())
         .collect();
 
     targets
         .iter()
         .flat_map(|t| t.architectures())
-        .filter(|arch| !installed.iter().any(|&toolchain| toolchain.contains(arch)))
+        .filter(|arch| {
+            !installed
+                .iter()
+                .any(|toolchain| toolchain.eq_ignore_ascii_case(arch))
+        })
         .collect()
 }
 
 /// Prompts the user to install the given **toolchains** by name and installs them if user permits it
-fn prompt_toolchain_installation(toolchains: &[&str]) -> Result<(), &'static str> {
+fn prompt_toolchain_installation(toolchains: &[&str], silent: bool) -> Result<(), String> {
     println!("The following toolchains are not installed:");
 
     for toolchain in toolchains {
@@ -132,17 +141,40 @@ fn prompt_toolchain_installation(toolchains: &[&str]) -> Result<(), &'static str
 
     let answer = Input::with_theme(&ColorfulTheme::default())
         .with_prompt("Do you want to install them? [Y/n]")
-        .default("y".to_owned())
+        .default("yes".to_owned())
         .interact_text()
         .unwrap()
         .trim()
         .to_lowercase();
 
-    if answer.contains('y') {
-        Ok(())
-    } else {
-        Err("Toolchains for some target architectures were not installed!")
+    if !(answer.eq_ignore_ascii_case("yes") || answer.eq_ignore_ascii_case("y")) {
+        return Err("Toolchains for some target architectures were not installed!".to_owned());
     }
+
+    let multi = silent.not().then(|| MultiProgress::new());
+    let spinner = silent
+        .not()
+        .then(|| MainSpinner::with_message("Installing Toolchains...".to_owned()));
+    multi.add(&spinner);
+    spinner.start();
+    for toolchain in toolchains {
+        let mut install = Command::new("rustup");
+        install.args(["target", "install", &toolchain]);
+        install.stdin(Stdio::null());
+
+        let step = silent.not().then(|| CommandSpinner::with_command(&install));
+        multi.add(&step);
+        step.start();
+
+        install
+            .execute()
+            .map_err(|e| format!("Error while donwloading toolchain {toolchain}: \n\t{e}"))?;
+
+        step.finish();
+    }
+    spinner.finish();
+
+    Ok(())
 }
 
 fn prompt_package_name(crate_name: &str) -> String {
