@@ -17,12 +17,21 @@ struct Args {
     #[arg(short, long, global = true)]
     /// Silence all output except errors and interactive prompts
     silent: bool,
+
+    #[arg(short = 'y', long, global = true)]
+    /// Accept all default selections from all interactive prompts.
+    ///
+    /// This is especially useful when invoked in an environment,  where no user interaction is possible,
+    /// e.g. a test runner. Prompts without a default state will be skipped as well, resulting in an error
+    /// if the corresponding value was not set as an argument beforehand.
+    accept_all: bool,
 }
 
 impl From<Args> for Config {
     fn from(args: Args) -> Self {
         Config {
             silent: args.silent,
+            accept_all: args.accept_all,
         }
     }
 }
