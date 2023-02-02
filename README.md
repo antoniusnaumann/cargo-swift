@@ -18,13 +18,9 @@ This plugin heavily builds on [swift-bridge](https://github.com/chinedufn/swift-
 > required for this plugin to work properly.
 
 ### Prerequisites
-Install this plugin
+Install this plugin, simply run
 ```
 cargo install cargo-swift
-```
-Make sure the toolchain for your desired platforms are installed. (In the future, cargo-swift will install the required toolchains on demand if they are not present). To install toolchains for all macOS and iOS targets, run:
-```
-rustup target add x86_64-apple-darwin aarch64-apple-darwin aarch64-apple-ios x86_64-apple-ios aarch64-apple-ios-sim
 ```
 > **Note**
 > Only Swift Packages that target Apple platforms can include binaries at the moment. 
@@ -42,7 +38,8 @@ To bundle the previously created Rust library as Swift Package, run:
 ```
 cargo swift package
 ```
-This command interactively prompts you for target platforms and swift package name.
+This command interactively prompts you for swift package name and target platforms.
+If some required toolchains for the selected target platforms are missing, cargo swift will ask you if it should install them automatically.
 
 That's it! You can now include the created package in an iOS or macOS app via Swift Package Manager.
 
