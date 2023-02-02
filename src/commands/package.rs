@@ -25,13 +25,19 @@ pub fn run(platforms: Option<Vec<Platform>>, package_name: Option<String>, confi
         return;
     }
 
-    generate_bridge_with_output(&crate_name, config.silent);
-
     let targets: Vec<_> = platforms
         .into_iter()
         .flat_map(|p| p.into_apple_platforms())
         .map(|p| p.target())
         .collect();
+
+    let missing_toolchains = check_installed_toolchains(&targets);
+    if !missing_toolchains.is_empty() {
+        prompt_toolchain_installation(&missing_toolchains)
+            .expect("Not all required toolchains installed. Aborting!");
+    }
+
+    generate_bridge_with_output(&crate_name, config.silent);
 
     // TODO: Check for missing toolchains and ask user if they should be installed
     for target in &targets {
@@ -112,8 +118,31 @@ fn check_installed_toolchains(targets: &[Target]) -> Vec<&'static str> {
     targets
         .iter()
         .flat_map(|t| t.architectures())
-        .filter(|arch| installed.iter().any(|&toolchain| toolchain.contains(arch)))
+        .filter(|arch| !installed.iter().any(|&toolchain| toolchain.contains(arch)))
         .collect()
+}
+
+/// Prompts the user to install the given **toolchains** by name and installs them if user permits it
+fn prompt_toolchain_installation(toolchains: &[&str]) -> Result<(), &'static str> {
+    println!("The following toolchains are not installed:");
+
+    for toolchain in toolchains {
+        println!("\t{toolchain}")
+    }
+
+    let answer = Input::with_theme(&ColorfulTheme::default())
+        .with_prompt("Do you want to install them? [Y/n]")
+        .default("y".to_owned())
+        .interact_text()
+        .unwrap()
+        .trim()
+        .to_lowercase();
+
+    if answer.contains('y') {
+        Ok(())
+    } else {
+        Err("Toolchains for some target architectures were not installed!")
+    }
 }
 
 fn prompt_package_name(crate_name: &str) -> String {
