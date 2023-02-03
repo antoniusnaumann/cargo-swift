@@ -1,13 +1,12 @@
-use std::{
-    ops::Not,
-    path::PathBuf,
-    process::{Command, Stdio},
-};
+use std::ops::Not;
+use std::path::PathBuf;
+use std::process::{Command, Stdio};
 
 use cargo_toml::Manifest;
 use clap::ValueEnum;
 use convert_case::{Case, Casing};
-use dialoguer::{theme::ColorfulTheme, Input, MultiSelect};
+use dialoguer::theme::ColorfulTheme;
+use dialoguer::{Input, MultiSelect};
 use execute::{command, Execute};
 use indicatif::MultiProgress;
 use swift_bridge_build::{ApplePlatform, CreatePackageConfig};
@@ -21,8 +20,9 @@ pub fn run(platforms: Option<Vec<Platform>>, package_name: Option<String>, confi
 
     let crate_name = manifest.package.unwrap().name.to_lowercase();
     // TODO: Prompt this but suggest default name based on crate name
-    let package_name = package_name.unwrap_or_else(|| prompt_package_name(&crate_name));
-    let platforms = platforms.unwrap_or_else(|| prompt_platforms());
+    let package_name =
+        package_name.unwrap_or_else(|| prompt_package_name(&crate_name, config.accept_all));
+    let platforms = platforms.unwrap_or_else(|| prompt_platforms(config.accept_all));
 
     if platforms.is_empty() {
         eprintln!("At least 1 platform needs to be selected!");
@@ -90,9 +90,13 @@ impl Platform {
     }
 }
 
-fn prompt_platforms() -> Vec<Platform> {
+fn prompt_platforms(accept_all: bool) -> Vec<Platform> {
     let platforms = Platform::all();
     let items: Vec<_> = platforms.iter().map(|p| p.display_name()).collect();
+
+    if accept_all {
+        return platforms;
+    }
 
     let chosen: Vec<usize> = MultiSelect::with_theme(&ColorfulTheme::default())
         .items(&items)
@@ -177,8 +181,12 @@ fn prompt_toolchain_installation(toolchains: &[&str], silent: bool) -> Result<()
     Ok(())
 }
 
-fn prompt_package_name(crate_name: &str) -> String {
+fn prompt_package_name(crate_name: &str, accept_all: bool) -> String {
     let default = crate_name.to_case(Case::UpperCamel);
+
+    if accept_all {
+        return default;
+    }
 
     Input::with_theme(&ColorfulTheme::default())
         .with_prompt("Swift Package Name")
