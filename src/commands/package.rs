@@ -37,8 +37,13 @@ pub fn run(platforms: Option<Vec<Platform>>, package_name: Option<String>, confi
 
     let missing_toolchains = check_installed_toolchains(&targets);
     if !missing_toolchains.is_empty() {
-        prompt_toolchain_installation(&missing_toolchains, config.silent)
-            .expect("Not all required toolchains installed. Aborting!");
+        if config.accept_all || prompt_toolchain_installation(&missing_toolchains) {
+            install_toolchains(&missing_toolchains, config.silent)
+                .expect("Error while installing toolchains. Is rustup installed?");
+        } else {
+            eprintln!("Toolchains for some target platforms were missing!");
+            return;
+        }
     }
 
     generate_bridge_with_output(&crate_name, config.silent);
@@ -135,8 +140,8 @@ fn check_installed_toolchains(targets: &[Target]) -> Vec<&'static str> {
         .collect()
 }
 
-/// Prompts the user to install the given **toolchains** by name and installs them if user permits it
-fn prompt_toolchain_installation(toolchains: &[&str], silent: bool) -> Result<(), String> {
+/// Prompts the user to install the given **toolchains** by name
+fn prompt_toolchain_installation(toolchains: &[&str]) -> bool {
     println!("The following toolchains are not installed:");
 
     for toolchain in toolchains {
@@ -151,10 +156,11 @@ fn prompt_toolchain_installation(toolchains: &[&str], silent: bool) -> Result<()
         .trim()
         .to_lowercase();
 
-    if !(answer.eq_ignore_ascii_case("yes") || answer.eq_ignore_ascii_case("y")) {
-        return Err("Toolchains for some target architectures were not installed!".to_owned());
-    }
+    answer.eq_ignore_ascii_case("yes") || answer.eq_ignore_ascii_case("y")
+}
 
+/// Attempts to install the given **toolchains**
+fn install_toolchains(toolchains: &[&str], silent: bool) -> Result<(), String> {
     let multi = silent.not().then(|| MultiProgress::new());
     let spinner = silent
         .not()
