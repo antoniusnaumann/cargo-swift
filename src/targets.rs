@@ -24,15 +24,16 @@ pub enum Target {
 
 impl Target {
     fn cargo_build_commands(&self) -> Vec<Command> {
+        // TODO: Make configurable if building for release or debug mode
         self.architectures()
             .into_iter()
-            .map(|arch| command(format!("cargo build --target {arch}")))
+            .map(|arch| command(format!("cargo build --target {arch} --release")))
             .collect()
     }
 
     fn lipo_commands(&self, crate_name: &str) -> Vec<Command> {
         // TODO: Make this configurable
-        let mode = "debug";
+        let mode = "release";
         match self {
             Target::Single { .. } => vec![],
             Target::Universal { architectures, .. } => {
@@ -91,7 +92,7 @@ impl Target {
 
     pub fn framework_directory(&self) -> String {
         // TODO: Make this configurable
-        let mode = "debug";
+        let mode = "release";
         match self {
             Target::Single { architecture, .. } => format!("./target/{architecture}/{mode}"),
             Target::Universal { universal_name, .. } => format!("./target/{universal_name}/{mode}"),

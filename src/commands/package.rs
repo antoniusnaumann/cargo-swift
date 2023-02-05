@@ -19,7 +19,6 @@ pub fn run(platforms: Option<Vec<Platform>>, package_name: Option<String>, confi
         Manifest::from_path("./Cargo.toml").expect("Could not find Cargo.toml in this directory!");
 
     let crate_name = manifest.package.unwrap().name.to_lowercase();
-    // TODO: Prompt this but suggest default name based on crate name
     let package_name =
         package_name.unwrap_or_else(|| prompt_package_name(&crate_name, config.accept_all));
     let platforms = platforms.unwrap_or_else(|| prompt_platforms(config.accept_all));
@@ -48,7 +47,6 @@ pub fn run(platforms: Option<Vec<Platform>>, package_name: Option<String>, confi
 
     generate_bridge_with_output(&crate_name, config.silent);
 
-    // TODO: Check for missing toolchains and ask user if they should be installed
     for target in &targets {
         build_with_output(target, &crate_name, config.silent);
     }
