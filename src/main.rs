@@ -1,4 +1,4 @@
-use cargo_swift::{init, package, Config};
+use cargo_swift::{init, package, Config, Mode};
 use clap::{Parser, Subcommand};
 
 #[derive(Parser)]
@@ -53,8 +53,13 @@ enum Action {
     Package {
         #[arg(short, long, trailing_var_arg = true, num_args = 1..=4, ignore_case = true)]
         platforms: Option<Vec<package::Platform>>,
+
         #[arg(short = 'n', long = "name")]
         package_name: Option<String>,
+
+        #[arg(short, long)]
+        /// Build package optimized for release (default: debug)
+        release: bool,
     },
 }
 
@@ -68,6 +73,12 @@ fn main() {
         Action::Package {
             platforms,
             package_name,
-        } => package::run(platforms, package_name, config),
+            release,
+        } => package::run(
+            platforms,
+            package_name,
+            config,
+            if release { Mode::Release } else { Mode::Debug },
+        ),
     }
 }

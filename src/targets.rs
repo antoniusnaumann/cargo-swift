@@ -22,30 +22,43 @@ pub enum Target {
     },
 }
 
+#[derive(Debug, Clone, Copy)]
+pub enum Mode {
+    Debug,
+    Release,
+}
+
 impl Target {
-    fn cargo_build_commands(&self) -> Vec<Command> {
-        // TODO: Make configurable if building for release or debug mode
+    fn cargo_build_commands(&self, mode: Mode) -> Vec<Command> {
+        let flag = match mode {
+            Mode::Debug => "",
+            Mode::Release => "--release",
+        };
+
         self.architectures()
             .into_iter()
-            .map(|arch| command(format!("cargo build --target {arch} --release")))
+            .map(|arch| command(format!("cargo build --target {arch} {flag}")))
             .collect()
     }
 
-    fn lipo_commands(&self, crate_name: &str) -> Vec<Command> {
-        // TODO: Make this configurable
-        let mode = "release";
+    fn lipo_commands(&self, crate_name: &str, mode: Mode) -> Vec<Command> {
+        let mode_str = match mode {
+            Mode::Debug => "debug",
+            Mode::Release => "release",
+        };
+
         match self {
             Target::Single { .. } => vec![],
             Target::Universal { architectures, .. } => {
-                let path = self.framework_directory();
+                let path = self.framework_directory(mode);
 
                 let target_name = format!("lib{}.a", crate_name.replace('-', "_"));
                 let component_paths: Vec<_> = architectures
                     .into_iter()
-                    .map(|arch| format!("./target/{arch}/{mode}/{target_name}"))
+                    .map(|arch| format!("./target/{arch}/{mode_str}/{target_name}"))
                     .collect();
                 let args = component_paths.join(" ");
-                let target_path = self.framework_path(crate_name);
+                let target_path = self.framework_path(crate_name, mode);
 
                 let make_dir = command(format!("mkdir -p {path}"));
                 let lipo = command(format!("lipo {args} -create -output {target_path}"));
@@ -58,10 +71,10 @@ impl Target {
     ///
     /// This function returns a list of commands that should be executed in their given
     /// order to build this target (and bundle architecture targets with lipo if it is a universal target).
-    pub fn commands(&self, crate_name: &str) -> Vec<Command> {
-        self.cargo_build_commands()
+    pub fn commands(&self, crate_name: &str, mode: Mode) -> Vec<Command> {
+        self.cargo_build_commands(mode)
             .into_iter()
-            .chain(self.lipo_commands(crate_name))
+            .chain(self.lipo_commands(crate_name, mode))
             .collect()
     }
 
@@ -90,19 +103,22 @@ impl Target {
         }
     }
 
-    pub fn framework_directory(&self) -> String {
-        // TODO: Make this configurable
-        let mode = "release";
+    pub fn framework_directory(&self, mode: Mode) -> String {
+        let mode = match mode {
+            Mode::Debug => "debug",
+            Mode::Release => "release",
+        };
+
         match self {
             Target::Single { architecture, .. } => format!("./target/{architecture}/{mode}"),
             Target::Universal { universal_name, .. } => format!("./target/{universal_name}/{mode}"),
         }
     }
 
-    pub fn framework_path(&self, crate_name: &str) -> String {
+    pub fn framework_path(&self, crate_name: &str, mode: Mode) -> String {
         format!(
             "{}/lib{}.a",
-            self.framework_directory(),
+            self.framework_directory(mode),
             crate_name.replace('-', "_")
         )
     }

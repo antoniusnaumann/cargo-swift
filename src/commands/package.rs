@@ -13,7 +13,12 @@ use swift_bridge_build::{ApplePlatform, CreatePackageConfig};
 
 use crate::*;
 
-pub fn run(platforms: Option<Vec<Platform>>, package_name: Option<String>, config: Config) {
+pub fn run(
+    platforms: Option<Vec<Platform>>,
+    package_name: Option<String>,
+    config: Config,
+    mode: Mode,
+) {
     // TODO: Allow path as optional argument to take other directories than current directory
     let manifest =
         Manifest::from_path("./Cargo.toml").expect("Could not find Cargo.toml in this directory!");
@@ -48,10 +53,10 @@ pub fn run(platforms: Option<Vec<Platform>>, package_name: Option<String>, confi
     generate_bridge_with_output(&crate_name, config.silent);
 
     for target in &targets {
-        build_with_output(target, &crate_name, config.silent);
+        build_with_output(target, &crate_name, config.silent, mode);
     }
 
-    create_package_with_output(&targets, &crate_name, &package_name, config.silent);
+    create_package_with_output(&targets, &crate_name, &package_name, config.silent, mode);
 }
 
 #[derive(ValueEnum, Copy, Clone, Debug)]
@@ -211,7 +216,7 @@ fn generate_bridge_with_output(crate_name: &str, silent: bool) {
     spinner.finish();
 }
 
-fn build_with_output(target: &Target, crate_name: &str, silent: bool) {
+fn build_with_output(target: &Target, crate_name: &str, silent: bool, mode: Mode) {
     let multi = silent.not().then(|| MultiProgress::new());
     let spinner = silent
         .not()
@@ -219,7 +224,7 @@ fn build_with_output(target: &Target, crate_name: &str, silent: bool) {
     multi.add(&spinner);
     spinner.start();
 
-    for mut command in target.commands(crate_name) {
+    for mut command in target.commands(crate_name, mode) {
         let step = silent.not().then(|| CommandSpinner::with_command(&command));
         multi.add(&step);
         step.start();
@@ -239,6 +244,7 @@ fn create_package_with_output(
     crate_name: &str,
     package_name: &str,
     silent: bool,
+    mode: Mode,
 ) {
     let spinner = silent
         .not()
@@ -246,7 +252,7 @@ fn create_package_with_output(
     // TODO: Use base path here
     let target_paths = targets
         .iter()
-        .map(|t| (t.platform(), t.framework_path(crate_name).into()))
+        .map(|t| (t.platform(), t.framework_path(crate_name, mode).into()))
         .collect();
     let config = CreatePackageConfig {
         bridge_dir: PathBuf::from("./generated"),
