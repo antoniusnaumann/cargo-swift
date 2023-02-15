@@ -1,5 +1,6 @@
 use std::fs::{create_dir, write};
 use std::ops::Not;
+use std::process::Stdio;
 
 use cargo_toml::Manifest;
 use execute::{command, Execute};
@@ -33,6 +34,24 @@ pub fn run(crate_name: String, config: Config) {
     create_dir(format!("{}/src", crate_name)).expect("Could not create src/ directory!");
     write(format!("{}/src/lib.rs", crate_name), lib_rs_content)
         .expect("Could not write src/lib.rs!");
+
+    spinner.finish();
+
+    let git_status_output = command!("git status")
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .execute_output()
+        .expect("Could not run git status!");
+
+    if let Some(0) = git_status_output.status.code() {
+        // Already in a git repository
+        return;
+    }
+
+    let spinner = config.silent.not().then_some(MainSpinner::with_message(
+        "Initializing git repository...".to_owned(),
+    ));
+    spinner.start();
 
     command!("git init")
         .current_dir(format!("./{crate_name}"))
