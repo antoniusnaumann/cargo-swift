@@ -1,10 +1,13 @@
 [package]
 name = "cargo-swift"
-description = "A cargo plugin to easily build Swift packages from Rust code"
+description = "A cargo plugin to easily build Swift packages from Rust code for use in iOS and macOS applications"
 version = "0.2.1"
 edition = "2021"
 authors = ["Antonius Naumann <git@antonius.dev>"]
 license = "MIT OR Apache-2.0"
+repository = "https://github.com/antoniusnaumann/cargo-swift"
+keywords = ["macos", "ios", "mobiledev", "spm", "swiftpackage"]
+categories = ["command-line-utilities", "development-tools", "development-tools::build-utils", "development-tools::cargo-plugins", "development-tools::ffi"]
 exclude = ["/readme", "/.github"]
 
 [dependencies]
