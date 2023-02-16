@@ -1,0 +1,28 @@
+name: E2E Tests
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  tests:
+    strategy:
+      matrix:
+        os: [macos-latest, macos-11, macos-12]
+        test: [init, package]
+    runs-on: ${{ matrix.os }}
+    steps:
+    - uses: actions/checkout@v3
+    - name: Install
+      run: cargo install --force --path .
+    - name: Create artifacts directory
+      run: mkdir testing/end-to-end/artifacts
+    - name: Run Tests
+      working-directory: ./testing/end-to-end/artifacts
+      run: ../${{ matrix.test }}.swift
+     
