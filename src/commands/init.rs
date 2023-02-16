@@ -1,14 +1,32 @@
+use std::fmt::Display;
 use std::fs::{create_dir, write};
 use std::ops::Not;
 use std::process::Stdio;
 
 use cargo_toml::Manifest;
+use clap::ValueEnum;
 use execute::{command, Execute};
 
 use crate::Ticking;
 use crate::{config::Config, MainSpinner};
 
-pub fn run(crate_name: String, config: Config) {
+#[derive(ValueEnum, Debug, Clone)]
+#[value()]
+pub enum Vcs {
+    Git,
+    None,
+}
+
+impl Display for Vcs {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Git => write!(f, "git"),
+            Self::None => write!(f, "none"),
+        }
+    }
+}
+
+pub fn run(crate_name: String, config: Config, vcs: Vcs) {
     let spinner = config.silent.not().then_some(MainSpinner::with_message(
         "Creating Rust library package...".to_owned(),
     ));
@@ -19,14 +37,10 @@ pub fn run(crate_name: String, config: Config) {
     let manifest = Manifest::from_str(include_str!("../../Cargo.toml")).unwrap();
     let cargo_swift_version = manifest.package().version();
 
-    let gitignore_content = include_str!("../../template/template.gitignore");
     let cargo_toml_content =
         include_str!("../../template/template.toml").replace("<CRATE_NAME>", &crate_name);
     let lib_rs_content =
         include_str!("../../template/lib.rs").replace("<CARGO_SWIFT_VERSION>", cargo_swift_version);
-
-    write(format!("{}/.gitignore", crate_name), gitignore_content)
-        .expect("Could not write .gitignore!");
 
     write(format!("{}/Cargo.toml", crate_name), cargo_toml_content)
         .expect("Could not write Cargo.toml!");
@@ -36,6 +50,17 @@ pub fn run(crate_name: String, config: Config) {
         .expect("Could not write src/lib.rs!");
 
     spinner.finish();
+
+    match vcs {
+        Vcs::Git => init_git_repository(&crate_name, config.silent),
+        Vcs::None => return,
+    }
+}
+
+fn init_git_repository(crate_name: &str, silent: bool) {
+    let gitignore_content = include_str!("../../template/template.gitignore");
+    write(format!("{}/.gitignore", crate_name), gitignore_content)
+        .expect("Could not write .gitignore!");
 
     let git_status_output = command!("git status")
         .stdout(Stdio::piped())
@@ -48,7 +73,7 @@ pub fn run(crate_name: String, config: Config) {
         return;
     }
 
-    let spinner = config.silent.not().then_some(MainSpinner::with_message(
+    let spinner = silent.not().then_some(MainSpinner::with_message(
         "Initializing git repository...".to_owned(),
     ));
     spinner.start();
