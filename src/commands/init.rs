@@ -53,7 +53,7 @@ pub fn run(crate_name: String, config: Config, vcs: Vcs) {
 
     match vcs {
         Vcs::Git => init_git_repository(&crate_name, config.silent),
-        Vcs::None => return,
+        Vcs::None => (),
     }
 }
 

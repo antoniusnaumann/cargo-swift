@@ -52,7 +52,7 @@ impl Ticking for MainSpinner {
     fn finish(&self) {
         let spinner_finish_style = main_spinner_finish_style();
 
-        self.inner.set_style(spinner_finish_style.clone());
+        self.inner.set_style(spinner_finish_style);
         self.inner.set_prefix("✔");
         self.inner.finish();
     }
@@ -94,7 +94,7 @@ impl CommandSpinner {
         let spinner_style = ProgressStyle::with_template("\t{msg}").unwrap();
 
         let inner = ProgressBar::new_spinner()
-            .with_style(spinner_style.clone())
+            .with_style(spinner_style)
             .with_message(command.multiline_info(70).replace('\n', "\n\t\t"));
 
         Self { inner }
@@ -109,7 +109,7 @@ impl Ticking for CommandSpinner {
     fn finish(&self) {
         let spinner_finish_style = ProgressStyle::with_template("\t{msg:.dim}").unwrap();
 
-        self.inner.set_style(spinner_finish_style.clone());
+        self.inner.set_style(spinner_finish_style);
         self.inner.finish();
     }
 }

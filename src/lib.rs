@@ -1,3 +1,5 @@
+#![allow(clippy::useless_format)]
+
 pub mod command;
 pub mod commands {
     pub mod init;

@@ -109,7 +109,7 @@ fn prompt_platforms(accept_all: bool) -> Vec<Platform> {
     let chosen: Vec<usize> = MultiSelect::with_theme(&ColorfulTheme::default())
         .items(&items)
         .with_prompt("Select Target Platforms")
-        .defaults(&vec![true, true, true, false])
+        .defaults(&[true, true, true, false])
         .interact()
         .unwrap();
 
@@ -127,7 +127,7 @@ fn check_installed_toolchains(targets: &[Target]) -> Vec<&'static str> {
     let output = String::from_utf8_lossy(&output.stdout);
 
     let installed: Vec<_> = output
-        .split("\n")
+        .split('\n')
         .filter(|s| s.contains("installed"))
         .map(|s| s.replace("(installed)", "").trim().to_owned())
         .collect();
@@ -164,7 +164,7 @@ fn prompt_toolchain_installation(toolchains: &[&str]) -> bool {
 
 /// Attempts to install the given **toolchains**
 fn install_toolchains(toolchains: &[&str], silent: bool) -> Result<(), String> {
-    let multi = silent.not().then(|| MultiProgress::new());
+    let multi = silent.not().then(MultiProgress::new);
     let spinner = silent
         .not()
         .then(|| MainSpinner::with_message("Installing Toolchains...".to_owned()));
@@ -172,7 +172,7 @@ fn install_toolchains(toolchains: &[&str], silent: bool) -> Result<(), String> {
     spinner.start();
     for toolchain in toolchains {
         let mut install = Command::new("rustup");
-        install.args(["target", "install", &toolchain]);
+        install.args(["target", "install", toolchain]);
         install.stdin(Stdio::null());
 
         let step = silent.not().then(|| CommandSpinner::with_command(&install));
@@ -217,7 +217,7 @@ fn generate_bridge_with_output(crate_name: &str, silent: bool) {
 }
 
 fn build_with_output(target: &Target, crate_name: &str, silent: bool, mode: Mode) {
-    let multi = silent.not().then(|| MultiProgress::new());
+    let multi = silent.not().then(MultiProgress::new);
     let spinner = silent
         .not()
         .then(|| MainSpinner::with_target(target.clone()));
@@ -231,7 +231,7 @@ fn build_with_output(target: &Target, crate_name: &str, silent: bool, mode: Mode
 
         command
             .execute()
-            .expect(format!("Failed to execute build command: {}", command.info()).as_str());
+            .unwrap_or_else(|_| panic!("Failed to execute build command: {}", command.info()));
 
         step.finish();
     }

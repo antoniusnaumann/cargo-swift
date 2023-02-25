@@ -54,7 +54,7 @@ impl Target {
 
                 let target_name = format!("lib{}.a", crate_name.replace('-', "_"));
                 let component_paths: Vec<_> = architectures
-                    .into_iter()
+                    .iter()
                     .map(|arch| format!("./target/{arch}/{mode_str}/{target_name}"))
                     .collect();
                 let args = component_paths.join(" ");
