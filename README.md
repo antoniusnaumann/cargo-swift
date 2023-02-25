@@ -30,7 +30,7 @@ cargo install cargo-swift
 > If you need to target Linux or Windows, you might want to manually setup [swift-bridge](https://github.com/chinedufn/swift-bridge) instead.
 
 ### Using cargo-swift
-You can create a new library template by running
+You can create a new library crate by running
 ```
 cargo swift init
 ```
@@ -51,7 +51,7 @@ That's it! You can now include the created package in an iOS or macOS app via Sw
 
 Configuration options can be supplied to cargo-swift in multiple ways:
 
-1. Command-line arguments (i.e. --platforms macos ios)
+1. Command-line arguments (i.e. ```--platforms macos ios```)
 2. Meta-data under ```[package.metadata.swiftpackage]``` tag in crate-level Cargo.toml
 3. Meta-data under ```[workspace.metadata.swiftpackage]``` tag in workspace-level Cargo.toml
 4. Prompt configuration values that are not provided by the methods above
