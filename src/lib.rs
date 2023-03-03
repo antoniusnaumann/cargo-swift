@@ -8,6 +8,7 @@ pub mod commands {
 pub mod config;
 pub mod spinners;
 pub mod targets;
+pub mod swiftpackage;
 
 pub use command::*;
 pub use commands::*;
