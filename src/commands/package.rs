@@ -14,6 +14,7 @@ use swift_bridge_build::{ApplePlatform, CreatePackageConfig};
 use crate::bindings::generate_bindings;
 use crate::spinners::*;
 use crate::targets::*;
+use crate::xcframework::create_xcframework;
 use crate::*;
 
 pub fn run(
@@ -62,6 +63,9 @@ pub fn run(
     for target in &targets {
         build_with_output(target, &crate_name, config.silent, mode);
     }
+
+    // TODO: Add after refactoring
+    // create_xcframework_with_output(&targets, &crate_name, &package_name, mode, config.silent);
 
     create_package_with_output(&targets, &crate_name, &package_name, config.silent, mode);
 }
@@ -256,6 +260,26 @@ fn build_with_output(target: &Target, crate_name: &str, silent: bool, mode: Mode
     spinner.finish();
 }
 
+fn create_xcframework_with_output(
+    targets: &[Target],
+    crate_name: &str,
+    package_name: &str,
+    mode: Mode,
+    silent: bool,
+) {
+    let spinner = silent
+        .not()
+        .then(|| MainSpinner::with_message(format!("Creating XCFramework...")));
+
+    // TODO: show command spinner here with xcbuild command
+    let output_dir = PathBuf::from(package_name);
+    // TODO: make this configurable
+    let generated_dir = PathBuf::from("./generated");
+    create_xcframework(targets, crate_name, &generated_dir, &output_dir, mode).unwrap();
+
+    spinner.finish();
+}
+
 fn create_package_with_output(
     targets: &[Target],
     crate_name: &str,
@@ -269,7 +293,7 @@ fn create_package_with_output(
     // TODO: Use base path here
     let target_paths = targets
         .iter()
-        .map(|t| (t.platform(), t.framework_path(crate_name, mode).into()))
+        .map(|t| (t.platform(), t.library_file(crate_name, mode).into()))
         .collect();
     let config = CreatePackageConfig {
         bridge_dir: PathBuf::from("./generated"),

@@ -11,6 +11,7 @@ mod config;
 mod spinners;
 mod swiftpackage;
 mod targets;
+mod xcframework;
 
 pub use command::*;
 pub use commands::*;

@@ -50,7 +50,7 @@ impl Target {
         match self {
             Target::Single { .. } => vec![],
             Target::Universal { architectures, .. } => {
-                let path = self.framework_directory(mode);
+                let path = self.library_directory(mode);
 
                 let target_name = format!("lib{}.a", crate_name.replace('-', "_"));
                 let component_paths: Vec<_> = architectures
@@ -58,7 +58,7 @@ impl Target {
                     .map(|arch| format!("./target/{arch}/{mode_str}/{target_name}"))
                     .collect();
                 let args = component_paths.join(" ");
-                let target_path = self.framework_path(crate_name, mode);
+                let target_path = self.library_file(crate_name, mode);
 
                 let make_dir = command(format!("mkdir -p {path}"));
                 let lipo = command(format!("lipo {args} -create -output {target_path}"));
@@ -103,7 +103,7 @@ impl Target {
         }
     }
 
-    pub fn framework_directory(&self, mode: Mode) -> String {
+    pub fn library_directory(&self, mode: Mode) -> String {
         let mode = match mode {
             Mode::Debug => "debug",
             Mode::Release => "release",
@@ -115,10 +115,10 @@ impl Target {
         }
     }
 
-    pub fn framework_path(&self, crate_name: &str, mode: Mode) -> String {
+    pub fn library_file(&self, crate_name: &str, mode: Mode) -> String {
         format!(
             "{}/lib{}.a",
-            self.framework_directory(mode),
+            self.library_directory(mode),
             crate_name.replace('-', "_")
         )
     }

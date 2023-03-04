@@ -1,7 +1,7 @@
-use anyhow::Error;
+use anyhow::Result;
 use camino::Utf8Path;
 
-pub fn generate_bindings() -> Result<(), Error> {
+pub fn generate_bindings() -> Result<()> {
     // TODO: Walk src directory for udl files
     let udl_file = Utf8Path::new("./src/ffi.udl");
     // TODO: Allow setting a base path here
