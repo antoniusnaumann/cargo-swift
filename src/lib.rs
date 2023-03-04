@@ -1,17 +1,18 @@
 #![allow(clippy::useless_format)]
 
-pub mod command;
-pub mod commands {
+mod command;
+mod commands {
     pub mod init;
     pub mod package;
 }
-pub mod config;
-pub mod spinners;
-pub mod targets;
-pub mod swiftpackage;
+
+mod bindings;
+mod config;
+mod spinners;
+mod swiftpackage;
+mod targets;
 
 pub use command::*;
 pub use commands::*;
 pub use config::*;
-pub use spinners::*;
 pub use targets::*;

@@ -7,8 +7,8 @@ use cargo_toml::Manifest;
 use clap::ValueEnum;
 use execute::{command, Execute};
 
-use crate::Ticking;
-use crate::{config::Config, MainSpinner};
+use crate::config::Config;
+use crate::spinners::{MainSpinner, Ticking};
 
 #[derive(ValueEnum, Debug, Clone)]
 #[value()]

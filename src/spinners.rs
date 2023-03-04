@@ -2,7 +2,8 @@ use std::{process::Command, time::Duration};
 
 use indicatif::{MultiProgress, ProgressBar, ProgressStyle};
 
-use crate::{CommandInfo, Target};
+use crate::targets::Target;
+use crate::CommandInfo;
 
 const TICK_RATE: Duration = Duration::from_millis(30);
 

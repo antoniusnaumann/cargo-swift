@@ -11,6 +11,9 @@ use execute::{command, Execute};
 use indicatif::MultiProgress;
 use swift_bridge_build::{ApplePlatform, CreatePackageConfig};
 
+use crate::bindings::generate_bindings;
+use crate::spinners::*;
+use crate::targets::*;
 use crate::*;
 
 pub fn run(
@@ -50,7 +53,11 @@ pub fn run(
         }
     }
 
+    // TODO: Remove after refactoring
     generate_bridge_with_output(&crate_name, config.silent);
+
+    // TODO: Add after refactoring
+    // generate_bindings_with_output(config.silent);
 
     for target in &targets {
         build_with_output(target, &crate_name, config.silent, mode);
@@ -212,6 +219,16 @@ fn generate_bridge_with_output(crate_name: &str, silent: bool) {
     let out_dir = PathBuf::from("./generated");
     let parsed = swift_bridge_build::parse_bridges(vec!["./src/lib.rs"]);
     parsed.write_all_concatenated(out_dir, crate_name);
+
+    spinner.finish();
+}
+
+fn generate_bindings_with_output(silent: bool) {
+    let spinner = silent
+        .not()
+        .then(|| MainSpinner::with_message(format!("Generating Swift bindings...")));
+
+    generate_bindings().expect("Could not generate UniFFI bindings for udl files!");
 
     spinner.finish();
 }
