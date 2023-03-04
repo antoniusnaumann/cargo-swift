@@ -29,19 +29,19 @@ pub fn create_xcframework(
     //  because it needs to match the name given in swift package manifest
     let framework = format!("{output_dir_name}/RustFramework.xcframework");
 
-    let mut args = vec!["-create-xcframework"];
+    let mut xcodebuild = Command::new("xcodebuild");
+    xcodebuild.arg("-create-xcframework");
+
     for lib in &libs {
-        args.push("-library");
-        args.push(lib);
-        args.push("-headers");
-        args.push(generated_dir_name);
+        xcodebuild.arg("-library");
+        xcodebuild.arg(lib);
+        xcodebuild.arg("-headers");
+        xcodebuild.arg(generated_dir_name);
     }
 
-    args.push("-output");
-    args.push(&framework);
-
-    let _ = Command::new("xcodebuild")
-        .args(args)
+    xcodebuild
+        .arg("-output")
+        .arg(&framework)
         .stdout(Stdio::piped())
         .spawn()?
         .wait_with_output()?;
