@@ -11,7 +11,7 @@ use dialoguer::theme::ColorfulTheme;
 use dialoguer::{Input, MultiSelect};
 use execute::{command, Execute};
 use indicatif::MultiProgress;
-use swift_bridge_build::{ApplePlatform, CreatePackageConfig};
+use swift_bridge_build::CreatePackageConfig;
 
 use crate::bindings::generate_bindings;
 use crate::spinners::*;
@@ -56,21 +56,14 @@ pub fn run(
         }
     }
 
-    // TODO: Remove after refactoring
-    generate_bridge_with_output(&crate_name, config.silent);
-
-    // TODO: Add after refactoring
-    // generate_bindings_with_output(config.silent);
+    generate_bindings_with_output(config.silent);
 
     for target in &targets {
         build_with_output(target, &crate_name, config.silent, mode);
     }
 
-    // TODO: Add after refactoring
-    // recreate_output_dir(&package_name).expect("Could not create package output directory!");
-    // create_xcframework_with_output(&targets, &crate_name, &package_name, mode, config.silent);
-
-    create_package_with_output(&targets, &crate_name, &package_name, config.silent, mode);
+    recreate_output_dir(&package_name).expect("Could not create package output directory!");
+    create_xcframework_with_output(&targets, &crate_name, &package_name, mode, config.silent);
 }
 
 #[derive(ValueEnum, Copy, Clone, Debug)]
@@ -87,7 +80,7 @@ impl Platform {
     fn into_apple_platforms(self) -> Vec<ApplePlatform> {
         match self {
             Platform::Macos => vec![ApplePlatform::MacOS],
-            Platform::Ios => vec![ApplePlatform::IOS, ApplePlatform::Simulator],
+            Platform::Ios => vec![ApplePlatform::IOS, ApplePlatform::IOSSimulator],
             //            Platform::Tvos => vec![ApplePlatform::TvOS],
             //            Platform::Watchos => vec![ApplePlatform::WatchOS],
         }
@@ -289,39 +282,5 @@ fn create_xcframework_with_output(
     let generated_dir = PathBuf::from("./generated");
     create_xcframework(targets, crate_name, &generated_dir, &output_dir, mode).unwrap();
 
-    spinner.finish();
-}
-
-fn create_package_with_output(
-    targets: &[Target],
-    crate_name: &str,
-    package_name: &str,
-    silent: bool,
-    mode: Mode,
-) {
-    let spinner = silent
-        .not()
-        .then(|| MainSpinner::with_message(format!("Creating Swift Package '{package_name}'...")));
-    // TODO: Use base path here
-    let target_paths = targets
-        .iter()
-        .map(|t| (t.platform(), t.library_file(crate_name, mode).into()))
-        .collect();
-    let config = CreatePackageConfig {
-        bridge_dir: PathBuf::from("./generated"),
-        paths: target_paths,
-        out_dir: package_name.into(),
-        package_name: package_name.into(),
-    };
-
-    swift_bridge_build::create_package(config);
-
-    spinner.finish();
-
-    let spinner = silent.not().then(|| {
-        MainSpinner::with_message(format!(
-            "Successfully created Swift Package in '{package_name}/'!"
-        ))
-    });
     spinner.finish();
 }

@@ -1,7 +1,6 @@
 use std::process::Command;
 
 use execute::command;
-use swift_bridge_build::ApplePlatform;
 
 pub trait TargetInfo {
     fn target(&self) -> Target;
@@ -124,6 +123,19 @@ impl Target {
     }
 }
 
+#[derive(Clone, Copy, Debug)]
+pub enum ApplePlatform {
+    IOS,
+    IOSSimulator,
+    MacOS,
+    MacCatalyst,
+    TvOS,
+    WatchOS,
+    WatchOSSimulator,
+    CarPlayOS,
+    CarPlayOSSimulator,
+}
+
 impl TargetInfo for ApplePlatform {
     fn target(&self) -> Target {
         use ApplePlatform::*;
@@ -133,7 +145,7 @@ impl TargetInfo for ApplePlatform {
                 display_name: "iOS",
                 platform: *self,
             },
-            Simulator => Target::Universal {
+            IOSSimulator => Target::Universal {
                 universal_name: "universal-ios",
                 architectures: vec!["x86_64-apple-ios", "aarch64-apple-ios-sim"],
                 display_name: "iOS Simulator",
