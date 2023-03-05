@@ -16,12 +16,12 @@ camino = "1.1.3"
 cargo_toml = "0.15.2"
 clap = { version = "4.1.6", features = ["derive"] }
 convert_case = "0.6.0"
+serde = { version = "1.0.152", features = ["derive"] }
+
+# Terminal UI
 dialoguer = { version = "0.10.3", default-features = false }
 execute = "0.2.11"
 indicatif = "0.17.3"
-serde = { version = "1.0.152", features = ["derive"] }
 
-swift-bridge-build = "0.1.50"
+# FFI Bindings
 uniffi_bindgen = "0.23.0"
-# Local version for checking integration with local swift-bridge-build changes
-#  swift-bridge-build = { path = "../swift-bridge/crates/swift-bridge-build" }

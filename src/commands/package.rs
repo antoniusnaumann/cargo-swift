@@ -1,5 +1,3 @@
-use std::fs::remove_dir_all;
-use std::io;
 use std::ops::Not;
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
@@ -11,10 +9,10 @@ use dialoguer::theme::ColorfulTheme;
 use dialoguer::{Input, MultiSelect};
 use execute::{command, Execute};
 use indicatif::MultiProgress;
-use swift_bridge_build::CreatePackageConfig;
 
 use crate::bindings::generate_bindings;
 use crate::spinners::*;
+use crate::swiftpackage::{create_swiftpackage, recreate_output_dir};
 use crate::targets::*;
 use crate::xcframework::create_xcframework;
 use crate::*;
@@ -64,6 +62,7 @@ pub fn run(
 
     recreate_output_dir(&package_name).expect("Could not create package output directory!");
     create_xcframework_with_output(&targets, &crate_name, &package_name, mode, config.silent);
+    create_package_with_output(&package_name, config.silent);
 }
 
 #[derive(ValueEnum, Copy, Clone, Debug)]
@@ -211,18 +210,6 @@ fn prompt_package_name(crate_name: &str, accept_all: bool) -> String {
         .unwrap()
 }
 
-fn generate_bridge_with_output(crate_name: &str, silent: bool) {
-    let spinner = silent
-        .not()
-        .then(|| MainSpinner::with_message(format!("Generating Swift bridging header...")));
-    // TODO: Allow setting a base path here
-    let out_dir = PathBuf::from("./generated");
-    let parsed = swift_bridge_build::parse_bridges(vec!["./src/lib.rs"]);
-    parsed.write_all_concatenated(out_dir, crate_name);
-
-    spinner.finish();
-}
-
 fn generate_bindings_with_output(silent: bool) {
     let spinner = silent
         .not()
@@ -256,15 +243,6 @@ fn build_with_output(target: &Target, crate_name: &str, silent: bool, mode: Mode
     spinner.finish();
 }
 
-fn recreate_output_dir(package_name: &str) -> io::Result<()> {
-    let dir = format!("./{package_name}");
-
-    match remove_dir_all(dir) {
-        Err(e) if e.kind() != io::ErrorKind::NotFound => Err(e),
-        _ => Ok(()),
-    }
-}
-
 fn create_xcframework_with_output(
     targets: &[Target],
     crate_name: &str,
@@ -282,5 +260,22 @@ fn create_xcframework_with_output(
     let generated_dir = PathBuf::from("./generated");
     create_xcframework(targets, crate_name, &generated_dir, &output_dir, mode).unwrap();
 
+    spinner.finish();
+}
+
+fn create_package_with_output(package_name: &str, silent: bool) {
+    let spinner = silent
+        .not()
+        .then(|| MainSpinner::with_message(format!("Creating Swift Package '{package_name}'...")));
+
+    create_swiftpackage(package_name);
+
+    spinner.finish();
+
+    let spinner = silent.not().then(|| {
+        MainSpinner::with_message(format!(
+            "Successfully created Swift Package in '{package_name}/'!"
+        ))
+    });
     spinner.finish();
 }
