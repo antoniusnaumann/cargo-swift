@@ -1,3 +1,5 @@
+use std::fs::remove_dir_all;
+use std::io;
 use std::ops::Not;
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
@@ -65,6 +67,7 @@ pub fn run(
     }
 
     // TODO: Add after refactoring
+    // recreate_output_dir(&package_name).expect("Could not create package output directory!");
     // create_xcframework_with_output(&targets, &crate_name, &package_name, mode, config.silent);
 
     create_package_with_output(&targets, &crate_name, &package_name, config.silent, mode);
@@ -258,6 +261,15 @@ fn build_with_output(target: &Target, crate_name: &str, silent: bool, mode: Mode
     }
 
     spinner.finish();
+}
+
+fn recreate_output_dir(package_name: &str) -> io::Result<()> {
+    let dir = format!("./{package_name}");
+
+    match remove_dir_all(dir) {
+        Err(e) if e.kind() != io::ErrorKind::NotFound => Err(e),
+        _ => Ok(()),
+    }
 }
 
 fn create_xcframework_with_output(
