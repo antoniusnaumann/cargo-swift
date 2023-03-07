@@ -11,3 +11,6 @@ name = "mylib"
 
 [dependencies]
 uniffi = "0.23"
+
+[build-dependencies]
+uniffi = { version = "0.23", features = ["build"] }
