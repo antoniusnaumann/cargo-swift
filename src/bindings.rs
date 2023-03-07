@@ -7,5 +7,5 @@ pub fn generate_bindings() -> Result<()> {
     // TODO: Allow setting a base path here
     let out_dir = Utf8Path::new("./generated");
 
-    uniffi_bindgen::generate_bindings(udl_file, None, vec!["swift"], Some(out_dir), None, true)
+    uniffi_bindgen::generate_bindings(udl_file, None, vec!["swift"], Some(out_dir), None, false)
 }
