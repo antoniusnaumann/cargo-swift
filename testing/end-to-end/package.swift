@@ -40,7 +40,7 @@ guard fileExists(atPath: "\(projectName)/\(packageName)/Package.swift") else {
 	error("No Package.swift file found in package directory")
 	exit(1)
 }
-guard dirExists(atPath: "\(projectName)/\(packageName)/RustXcframework.xcframework") else { 
+guard dirExists(atPath: "\(projectName)/\(packageName)/RustFramework.xcframework") else { 
 	error("No .xcframework directory found in package directory")
 	exit(1)
 }
@@ -48,5 +48,21 @@ guard dirExists(atPath: "\(projectName)/\(packageName)/Sources") else {
 	error("No \"Sources/\" directory found in package directory")
 	exit(1)
 }
+guard dirExists(atPath: "\(projectName)/\(packageName)/Sources/\(packageName)") else { 
+	error("No \"\(packageName)/\" directory found in sources directory")
+	exit(1)
+}
+guard fileExists(atPath: "\(projectName)/\(packageName)/Sources/\(packageName)/lib.swift") else { 
+	error("No lib.swift file found in module")
+	exit(1)
+}
+
+let swift = Process()
+swift.executableURL = URL(fileURLWithPath: "/usr/bin/env")
+swift.currentDirectoryPath += "/\(projectName)/\(packageName)"
+swift.arguments = ["swift", "build"]
+
+try! swift.run()
+swift.waitUntilExit()
 
 print("Tests for cargo swift package passed!")

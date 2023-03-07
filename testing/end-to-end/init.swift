@@ -31,6 +31,10 @@ guard fileExists(atPath: "\(projectName)/Cargo.toml") else {
 	error("No Cargo.toml found in project directory")
 	exit(1)
 }
+guard fileExists(atPath: "\(projectName)/build.rs") else { 
+	error("No build.rs file found in project directory")
+	exit(1)
+}
 guard fileExists(atPath: "\(projectName)/.gitignore") else { 
 	error("No .gitignore found in project directory")
 	exit(1)
