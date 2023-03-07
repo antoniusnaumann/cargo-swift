@@ -1,4 +1,4 @@
-use std::fs::{create_dir_all, remove_dir_all, write};
+use std::fs::{create_dir, create_dir_all, remove_dir_all, write};
 use std::io;
 
 /// Create artifacts for a swift package given the package name
@@ -20,8 +20,8 @@ pub fn create_swiftpackage(package_name: &str) {
 pub fn recreate_output_dir(package_name: &str) -> io::Result<()> {
     let dir = format!("./{package_name}");
 
-    match remove_dir_all(dir) {
+    match remove_dir_all(&dir) {
         Err(e) if e.kind() != io::ErrorKind::NotFound => Err(e),
-        _ => Ok(()),
+        _ => create_dir(&dir),
     }
 }
