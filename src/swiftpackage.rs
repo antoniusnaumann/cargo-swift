@@ -1,5 +1,7 @@
-use std::fs::{create_dir, create_dir_all, remove_dir_all, write};
+use std::fs::{copy, create_dir_all, write};
 use std::io;
+
+use crate::recreate_dir;
 
 /// Create artifacts for a swift package given the package name
 ///
@@ -15,13 +17,16 @@ pub fn create_swiftpackage(package_name: &str) {
 
     create_dir_all(format!("{}/Sources/{}", package_name, package_name))
         .expect("Could not create module sources directory!");
+
+    copy(
+        "./generated/sources/lib.swift",
+        format!("{}/Sources/{}/lib.swift", package_name, package_name),
+    )
+    .expect("Could not copy generated swift source files!");
 }
 
 pub fn recreate_output_dir(package_name: &str) -> io::Result<()> {
     let dir = format!("./{package_name}");
 
-    match remove_dir_all(&dir) {
-        Err(e) if e.kind() != io::ErrorKind::NotFound => Err(e),
-        _ => create_dir(&dir),
-    }
+    recreate_dir(dir)
 }

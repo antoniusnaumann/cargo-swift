@@ -17,7 +17,8 @@ pub fn create_xcframework(
         .map(|t| t.library_file(lib_name, mode))
         .collect();
 
-    let generated_dir_name = &generated_dir
+    let headers = generated_dir.join("headers");
+    let headers = headers
         .to_str()
         .ok_or(anyhow!("Directory for bindings has an invalid name!"))?;
 
@@ -36,7 +37,7 @@ pub fn create_xcframework(
         xcodebuild.arg("-library");
         xcodebuild.arg(lib);
         xcodebuild.arg("-headers");
-        xcodebuild.arg(generated_dir_name);
+        xcodebuild.arg(headers);
     }
 
     xcodebuild
