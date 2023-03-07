@@ -40,7 +40,7 @@ impl Target {
             .collect()
     }
 
-    fn lipo_commands(&self, crate_name: &str, mode: Mode) -> Vec<Command> {
+    fn lipo_commands(&self, lib_name: &str, mode: Mode) -> Vec<Command> {
         let mode_str = match mode {
             Mode::Debug => "debug",
             Mode::Release => "release",
@@ -51,13 +51,13 @@ impl Target {
             Target::Universal { architectures, .. } => {
                 let path = self.library_directory(mode);
 
-                let target_name = format!("lib{}.a", crate_name.replace('-', "_"));
+                let target_name = format!("lib{}.dylib", lib_name);
                 let component_paths: Vec<_> = architectures
                     .iter()
                     .map(|arch| format!("./target/{arch}/{mode_str}/{target_name}"))
                     .collect();
                 let args = component_paths.join(" ");
-                let target_path = self.library_file(crate_name, mode);
+                let target_path = self.library_file(lib_name, mode);
 
                 let make_dir = command(format!("mkdir -p {path}"));
                 let lipo = command(format!("lipo {args} -create -output {target_path}"));
@@ -70,10 +70,10 @@ impl Target {
     ///
     /// This function returns a list of commands that should be executed in their given
     /// order to build this target (and bundle architecture targets with lipo if it is a universal target).
-    pub fn commands(&self, crate_name: &str, mode: Mode) -> Vec<Command> {
+    pub fn commands(&self, lib_name: &str, mode: Mode) -> Vec<Command> {
         self.cargo_build_commands(mode)
             .into_iter()
-            .chain(self.lipo_commands(crate_name, mode))
+            .chain(self.lipo_commands(lib_name, mode))
             .collect()
     }
 
@@ -114,12 +114,8 @@ impl Target {
         }
     }
 
-    pub fn library_file(&self, crate_name: &str, mode: Mode) -> String {
-        format!(
-            "{}/lib{}.a",
-            self.library_directory(mode),
-            crate_name.replace('-', "_")
-        )
+    pub fn library_file(&self, lib_name: &str, mode: Mode) -> String {
+        format!("{}/lib{}.dylib", self.library_directory(mode), lib_name)
     }
 }
 

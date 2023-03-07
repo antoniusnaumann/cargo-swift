@@ -30,6 +30,12 @@ pub fn run(
     let crate_name = manifest.package.unwrap().name.to_lowercase();
     let package_name =
         package_name.unwrap_or_else(|| prompt_package_name(&crate_name, config.accept_all));
+    let lib_name = manifest
+        .lib
+        .expect("No library tag defined in Cargo.toml!")
+        .name
+        .expect("No library name found in Cargo.toml!");
+
     let platforms = platforms.unwrap_or_else(|| prompt_platforms(config.accept_all));
 
     if platforms.is_empty() {
@@ -57,11 +63,11 @@ pub fn run(
     generate_bindings_with_output(config.silent);
 
     for target in &targets {
-        build_with_output(target, &crate_name, config.silent, mode);
+        build_with_output(target, &lib_name, config.silent, mode);
     }
 
     recreate_output_dir(&package_name).expect("Could not create package output directory!");
-    create_xcframework_with_output(&targets, &crate_name, &package_name, mode, config.silent);
+    create_xcframework_with_output(&targets, &lib_name, &package_name, mode, config.silent);
     create_package_with_output(&package_name, config.silent);
 }
 
@@ -220,7 +226,7 @@ fn generate_bindings_with_output(silent: bool) {
     spinner.finish();
 }
 
-fn build_with_output(target: &Target, crate_name: &str, silent: bool, mode: Mode) {
+fn build_with_output(target: &Target, lib_name: &str, silent: bool, mode: Mode) {
     let multi = silent.not().then(MultiProgress::new);
     let spinner = silent
         .not()
@@ -228,7 +234,7 @@ fn build_with_output(target: &Target, crate_name: &str, silent: bool, mode: Mode
     multi.add(&spinner);
     spinner.start();
 
-    for mut command in target.commands(crate_name, mode) {
+    for mut command in target.commands(lib_name, mode) {
         let step = silent.not().then(|| CommandSpinner::with_command(&command));
         multi.add(&step);
         step.start();
@@ -245,7 +251,7 @@ fn build_with_output(target: &Target, crate_name: &str, silent: bool, mode: Mode
 
 fn create_xcframework_with_output(
     targets: &[Target],
-    crate_name: &str,
+    lib_name: &str,
     package_name: &str,
     mode: Mode,
     silent: bool,
@@ -258,7 +264,7 @@ fn create_xcframework_with_output(
     let output_dir = PathBuf::from(package_name);
     // TODO: make this configurable
     let generated_dir = PathBuf::from("./generated");
-    create_xcframework(targets, crate_name, &generated_dir, &output_dir, mode).unwrap();
+    create_xcframework(targets, lib_name, &generated_dir, &output_dir, mode).unwrap();
 
     spinner.finish();
 }

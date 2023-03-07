@@ -7,14 +7,14 @@ use crate::{Mode, Target};
 
 pub fn create_xcframework(
     targets: &[Target],
-    crate_name: &str,
+    lib_name: &str,
     generated_dir: &Path,
     output_dir: &Path,
     mode: Mode,
 ) -> Result<()> {
     let libs: Vec<_> = targets
         .iter()
-        .map(|t| t.library_file(crate_name, mode))
+        .map(|t| t.library_file(lib_name, mode))
         .collect();
 
     let generated_dir_name = &generated_dir
