@@ -41,6 +41,7 @@ pub fn run(crate_name: String, config: Config, vcs: Vcs) {
         include_str!("../../template/template.toml").replace("<CRATE_NAME>", &crate_name);
     let lib_rs_content =
         include_str!("../../template/lib.rs").replace("<CARGO_SWIFT_VERSION>", cargo_swift_version);
+    let udl_content = include_str!("../../template/template.udl");
 
     write(format!("{}/Cargo.toml", crate_name), cargo_toml_content)
         .expect("Could not write Cargo.toml!");
@@ -48,6 +49,8 @@ pub fn run(crate_name: String, config: Config, vcs: Vcs) {
     create_dir(format!("{}/src", crate_name)).expect("Could not create src/ directory!");
     write(format!("{}/src/lib.rs", crate_name), lib_rs_content)
         .expect("Could not write src/lib.rs!");
+    write(format!("{}/src/lib.udl", crate_name), udl_content)
+        .expect("Could not write src/lib.udl!");
 
     spinner.finish();
 

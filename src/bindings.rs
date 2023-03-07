@@ -3,7 +3,7 @@ use camino::Utf8Path;
 
 pub fn generate_bindings() -> Result<()> {
     // TODO: Walk src directory for udl files
-    let udl_file = Utf8Path::new("./src/ffi.udl");
+    let udl_file = Utf8Path::new("./src/lib.udl");
     // TODO: Allow setting a base path here
     let out_dir = Utf8Path::new("./generated");
 
