@@ -1,6 +1,6 @@
 use std::fs::{self, create_dir};
 
-use anyhow::Result;
+use crate::Result;
 use camino::Utf8Path;
 
 use crate::recreate_dir;

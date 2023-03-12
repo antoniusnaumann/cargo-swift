@@ -12,6 +12,7 @@ use execute::{command, Execute};
 use indicatif::MultiProgress;
 
 use crate::bindings::generate_bindings;
+use crate::error::*;
 use crate::spinners::*;
 use crate::swiftpackage::{create_swiftpackage, recreate_output_dir};
 use crate::targets::*;
@@ -176,7 +177,7 @@ fn prompt_toolchain_installation(toolchains: &[&str]) -> bool {
 }
 
 /// Attempts to install the given **toolchains**
-fn install_toolchains(toolchains: &[&str], silent: bool) -> Result<(), String> {
+fn install_toolchains(toolchains: &[&str], silent: bool) -> Result<()> {
     let multi = silent.not().then(MultiProgress::new);
     let spinner = silent
         .not()
