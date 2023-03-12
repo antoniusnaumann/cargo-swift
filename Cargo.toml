@@ -25,3 +25,4 @@ indicatif = "0.17.3"
 
 # FFI Bindings
 uniffi_bindgen = "0.23.0"
+thiserror = "1.0.39"
