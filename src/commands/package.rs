@@ -284,9 +284,14 @@ fn create_xcframework_with_output(
     let output_dir = PathBuf::from(package_name);
     // TODO: make this configurable
     let generated_dir = PathBuf::from("./generated");
-    create_xcframework(targets, lib_name, &generated_dir, &output_dir, mode).unwrap();
 
-    spinner.finish();
+    let result = create_xcframework(targets, lib_name, &generated_dir, &output_dir, mode);
+
+    if result.is_ok() {
+        spinner.finish();
+    } else {
+        panic!("Packaging as XCFramework failed. Aborted!")
+    }
 }
 
 fn create_package_with_output(package_name: &str, silent: bool) {
