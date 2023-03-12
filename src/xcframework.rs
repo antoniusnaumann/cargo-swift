@@ -1,3 +1,4 @@
+use std::io::{stderr, Write};
 use std::path::Path;
 use std::process::{Command, Stdio};
 
@@ -40,12 +41,20 @@ pub fn create_xcframework(
         xcodebuild.arg(headers);
     }
 
-    xcodebuild
+    let output = xcodebuild
         .arg("-output")
         .arg(&framework)
         .stdout(Stdio::piped())
-        .spawn()?
-        .wait_with_output()?;
+        .stderr(Stdio::piped())
+        .output()?;
 
-    Ok(())
+    if !output.status.success() {
+        // TODO: This method should not be responsible for printing error directly.
+        //  Create a custom error enum that can hold either a string or a Vec<u8> instead.
+        stderr().write_all(&output.stderr).unwrap();
+
+        Err(anyhow!("xcodebuild failed!"))
+    } else {
+        Ok(())
+    }
 }
