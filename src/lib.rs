@@ -8,6 +8,7 @@ mod commands {
 
 mod bindings;
 mod config;
+mod error;
 mod spinners;
 mod swiftpackage;
 mod targets;
