@@ -2,9 +2,9 @@ use std::io::{stderr, Write};
 use std::path::Path;
 use std::process::{Command, Stdio};
 
-use anyhow::{anyhow, Result};
+use anyhow::anyhow;
 
-use crate::{Mode, Target};
+use crate::{Error, Mode, Result, Target};
 
 pub fn create_xcframework(
     targets: &[Target],
@@ -53,7 +53,7 @@ pub fn create_xcframework(
         //  Create a custom error enum that can hold either a string or a Vec<u8> instead.
         stderr().write_all(&output.stderr).unwrap();
 
-        Err(anyhow!("xcodebuild failed!"))
+        Err(Error::new("xcodebuild failed!"))
     } else {
         Ok(())
     }
