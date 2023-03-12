@@ -1,3 +1,4 @@
+use std::io::{stderr, Write};
 use std::ops::Not;
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
@@ -239,9 +240,28 @@ fn build_with_output(target: &Target, lib_name: &str, silent: bool, mode: Mode) 
         multi.add(&step);
         step.start();
 
-        command
-            .execute_check_exit_status_code(0)
+        let args = if command.get_program().to_string_lossy().contains("cargo") {
+            vec!["--color", "always"]
+        } else {
+            vec![]
+        };
+
+        let output = command
+            .args(args)
+            .stderr(Stdio::piped())
+            .stdout(Stdio::null())
+            .output()
             .unwrap_or_else(|_| panic!("Failed to execute build command: {}", command.info()));
+
+        if !output.status.success() {
+            // TODO: Show error state for spinners
+            stderr()
+                // TODO: Trim whitespace once byte slice ascii operations are stabilized
+                // .write_all(&output.stderr.trim_ascii_start())
+                .write_all(&output.stderr)
+                .unwrap();
+            panic!("Build failed. Aborted!");
+        }
 
         step.finish();
     }
