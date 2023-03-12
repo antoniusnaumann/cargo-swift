@@ -240,7 +240,7 @@ fn build_with_output(target: &Target, lib_name: &str, silent: bool, mode: Mode) 
         step.start();
 
         command
-            .execute()
+            .execute_check_exit_status_code(0)
             .unwrap_or_else(|_| panic!("Failed to execute build command: {}", command.info()));
 
         step.finish();
