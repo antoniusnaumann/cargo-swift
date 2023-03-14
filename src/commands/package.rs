@@ -1,4 +1,3 @@
-use std::io::{stderr, Write};
 use std::ops::Not;
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
@@ -24,7 +23,7 @@ pub fn run(
     package_name: Option<String>,
     config: Config,
     mode: Mode,
-) {
+) -> Result<()> {
     // TODO: Allow path as optional argument to take other directories than current directory
     let manifest =
         Manifest::from_path("./Cargo.toml").expect("Could not find Cargo.toml in this directory!");
@@ -34,15 +33,14 @@ pub fn run(
         package_name.unwrap_or_else(|| prompt_package_name(&crate_name, config.accept_all));
     let lib_name = manifest
         .lib
-        .expect("No library tag defined in Cargo.toml!")
+        .ok_or("No library tag defined in Cargo.toml!")?
         .name
-        .expect("No library name found in Cargo.toml!");
+        .ok_or("No library name found in Cargo.toml!")?;
 
     let platforms = platforms.unwrap_or_else(|| prompt_platforms(config.accept_all));
 
     if platforms.is_empty() {
-        eprintln!("At least 1 platform needs to be selected!");
-        return;
+        Err("At least 1 platform needs to be selected!")?;
     }
 
     let targets: Vec<_> = platforms
@@ -54,23 +52,23 @@ pub fn run(
     let missing_toolchains = check_installed_toolchains(&targets);
     if !missing_toolchains.is_empty() {
         if config.accept_all || prompt_toolchain_installation(&missing_toolchains) {
-            install_toolchains(&missing_toolchains, config.silent)
-                .expect("Error while installing toolchains. Is rustup installed?");
+            install_toolchains(&missing_toolchains, config.silent)?;
         } else {
-            eprintln!("Toolchains for some target platforms were missing!");
-            return;
+            Err("Toolchains for some target platforms were missing!")?;
         }
     }
 
     generate_bindings_with_output(config.silent);
 
     for target in &targets {
-        build_with_output(target, &lib_name, config.silent, mode);
+        build_with_output(target, &lib_name, config.silent, mode)?;
     }
 
     recreate_output_dir(&package_name).expect("Could not create package output directory!");
-    create_xcframework_with_output(&targets, &lib_name, &package_name, mode, config.silent);
+    create_xcframework_with_output(&targets, &lib_name, &package_name, mode, config.silent)?;
     create_package_with_output(&package_name, config.silent);
+
+    Ok(())
 }
 
 #[derive(ValueEnum, Copy, Clone, Debug)]
@@ -228,7 +226,7 @@ fn generate_bindings_with_output(silent: bool) {
     spinner.finish();
 }
 
-fn build_with_output(target: &Target, lib_name: &str, silent: bool, mode: Mode) {
+fn build_with_output(target: &Target, lib_name: &str, silent: bool, mode: Mode) -> Result<()> {
     let multi = silent.not().then(MultiProgress::new);
     let spinner = silent
         .not()
@@ -256,18 +254,15 @@ fn build_with_output(target: &Target, lib_name: &str, silent: bool, mode: Mode) 
 
         if !output.status.success() {
             // TODO: Show error state for spinners
-            stderr()
-                // TODO: Trim whitespace once byte slice ascii operations are stabilized
-                // .write_all(&output.stderr.trim_ascii_start())
-                .write_all(&output.stderr)
-                .unwrap();
-            panic!("Build failed. Aborted!");
+            spinner.finish();
+            return Err(output.stderr.into());
         }
 
         step.finish();
     }
 
     spinner.finish();
+    Ok(())
 }
 
 fn create_xcframework_with_output(
@@ -276,7 +271,7 @@ fn create_xcframework_with_output(
     package_name: &str,
     mode: Mode,
     silent: bool,
-) {
+) -> Result<()> {
     let spinner = silent
         .not()
         .then(|| MainSpinner::with_message(format!("Creating XCFramework...")));
@@ -291,8 +286,11 @@ fn create_xcframework_with_output(
     if result.is_ok() {
         spinner.finish();
     } else {
-        panic!("Packaging as XCFramework failed. Aborted!")
+        // TODO: Show error spinner
+        Err("Packaging as XCFramework failed. Aborted!")?;
     }
+
+    result
 }
 
 fn create_package_with_output(package_name: &str, silent: bool) {
