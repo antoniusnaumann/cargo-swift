@@ -8,6 +8,7 @@ use clap::ValueEnum;
 use execute::{command, Execute};
 
 use crate::config::Config;
+use crate::error::Result;
 use crate::spinners::{MainSpinner, Ticking};
 
 #[derive(ValueEnum, Debug, Clone)]
@@ -26,7 +27,7 @@ impl Display for Vcs {
     }
 }
 
-pub fn run(crate_name: String, config: Config, vcs: Vcs) {
+pub fn run(crate_name: String, config: Config, vcs: Vcs) -> Result<()> {
     let spinner = config.silent.not().then_some(MainSpinner::with_message(
         "Creating Rust library package...".to_owned(),
     ));
@@ -45,27 +46,29 @@ pub fn run(crate_name: String, config: Config, vcs: Vcs) {
     let udl_content = include_str!("../../template/template.lib.udl");
 
     write(format!("{}/Cargo.toml", crate_name), cargo_toml_content)
-        .expect("Could not write Cargo.toml!");
+        .map_err(|_| "Could not write Cargo.toml!")?;
     write(format!("{}/build.rs", crate_name), build_rs_content).expect("Could not write build.rs!");
 
     create_dir(format!("{}/src", crate_name)).expect("Could not create src/ directory!");
     write(format!("{}/src/lib.rs", crate_name), lib_rs_content)
-        .expect("Could not write src/lib.rs!");
+        .map_err(|_| "Could not write src/lib.rs!")?;
     write(format!("{}/src/lib.udl", crate_name), udl_content)
-        .expect("Could not write src/lib.udl!");
+        .map_err(|_| "Could not write src/lib.udl!")?;
 
     spinner.finish();
 
     match vcs {
-        Vcs::Git => init_git_repository(&crate_name, config.silent),
+        Vcs::Git => init_git_repository(&crate_name, config.silent)?,
         Vcs::None => (),
-    }
+    };
+
+    Ok(())
 }
 
-fn init_git_repository(crate_name: &str, silent: bool) {
+fn init_git_repository(crate_name: &str, silent: bool) -> Result<()> {
     let gitignore_content = include_str!("../../template/template.gitignore");
     write(format!("{}/.gitignore", crate_name), gitignore_content)
-        .expect("Could not write .gitignore!");
+        .map_err(|_| "Could not write .gitignore!")?;
 
     let git_status_output = command!("git status")
         .stdout(Stdio::piped())
@@ -75,7 +78,7 @@ fn init_git_repository(crate_name: &str, silent: bool) {
 
     if let Some(0) = git_status_output.status.code() {
         // Already in a git repository
-        return;
+        return Ok(());
     }
 
     let spinner = silent.not().then_some(MainSpinner::with_message(
@@ -93,4 +96,6 @@ fn init_git_repository(crate_name: &str, silent: bool) {
         .expect("Could not checkout branch main!");
 
     spinner.finish();
+
+    Ok(())
 }

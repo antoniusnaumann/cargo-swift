@@ -70,7 +70,7 @@ fn main() {
     let Cargo::Swift(args) = Cargo::parse();
     let config = args.clone().into();
 
-    match args.action {
+    let result = match args.action {
         Action::Init { crate_name, vcs } => init::run(crate_name, config, vcs),
 
         Action::Package {
@@ -83,5 +83,11 @@ fn main() {
             config,
             if release { Mode::Release } else { Mode::Debug },
         ),
+    };
+
+    if let Err(e) = result {
+        eprintln!("\n");
+        eprintln!("Failed due to the following error: ");
+        e.print();
     }
 }
