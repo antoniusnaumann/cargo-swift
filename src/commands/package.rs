@@ -191,6 +191,7 @@ fn install_toolchains(toolchains: &[&str], silent: bool) -> Result<()> {
         multi.add(&step);
         step.start();
 
+        // TODO: make this a separate function and show error spinner on fail
         install
             .execute()
             .map_err(|e| format!("Error while donwloading toolchain {toolchain}: \n\t{e}"))?;
@@ -253,8 +254,8 @@ fn build_with_output(target: &Target, lib_name: &str, silent: bool, mode: Mode) 
             .unwrap_or_else(|_| panic!("Failed to execute build command: {}", command.info()));
 
         if !output.status.success() {
-            // TODO: Show error state for spinners
-            spinner.finish();
+            step.fail();
+            spinner.fail();
             return Err(output.stderr.into());
         }
 
@@ -286,7 +287,7 @@ fn create_xcframework_with_output(
     if result.is_ok() {
         spinner.finish();
     } else {
-        // TODO: Show error spinner
+        spinner.fail();
         Err("Packaging as XCFramework failed. Aborted!")?;
     }
 

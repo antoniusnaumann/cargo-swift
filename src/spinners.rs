@@ -15,6 +15,10 @@ fn main_spinner_finish_style() -> ProgressStyle {
     ProgressStyle::with_template("{prefix:.green} {wide_msg:.bold}").unwrap()
 }
 
+fn main_spinner_fail_style() -> ProgressStyle {
+    ProgressStyle::with_template("{prefix:.red} {wide_msg:.bold}").unwrap()
+}
+
 pub trait Spinner {
     fn spinner(self) -> ProgressBar;
 }
@@ -22,6 +26,7 @@ pub trait Spinner {
 pub trait Ticking {
     fn start(&self);
     fn finish(&self);
+    fn fail(&self);
 }
 
 #[derive(Clone)]
@@ -57,6 +62,14 @@ impl Ticking for MainSpinner {
         self.inner.set_prefix("✔");
         self.inner.finish();
     }
+
+    fn fail(&self) {
+        let spinner_fail_style = main_spinner_fail_style();
+
+        self.inner.set_style(spinner_fail_style);
+        self.inner.set_prefix("x");
+        self.inner.finish();
+    }
 }
 
 impl Ticking for Option<MainSpinner> {
@@ -69,6 +82,12 @@ impl Ticking for Option<MainSpinner> {
     fn finish(&self) {
         if let Some(this) = self {
             this.finish()
+        }
+    }
+
+    fn fail(&self) {
+        if let Some(this) = self {
+            this.fail()
         }
     }
 }
@@ -113,6 +132,10 @@ impl Ticking for CommandSpinner {
         self.inner.set_style(spinner_finish_style);
         self.inner.finish();
     }
+
+    fn fail(&self) {
+        self.finish()
+    }
 }
 
 impl Ticking for Option<CommandSpinner> {
@@ -125,6 +148,12 @@ impl Ticking for Option<CommandSpinner> {
     fn finish(&self) {
         if let Some(this) = self {
             this.finish()
+        }
+    }
+
+    fn fail(&self) {
+        if let Some(this) = self {
+            this.fail()
         }
     }
 }
