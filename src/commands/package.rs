@@ -13,6 +13,7 @@ use indicatif::MultiProgress;
 use crate::bindings::generate_bindings;
 use crate::error::*;
 use crate::spinners::*;
+use crate::step::run_step;
 use crate::swiftpackage::{create_swiftpackage, recreate_output_dir};
 use crate::targets::*;
 use crate::xcframework::create_xcframework;
@@ -58,15 +59,15 @@ pub fn run(
         }
     }
 
-    generate_bindings_with_output(config.silent);
+    generate_bindings_with_output(&config)?;
 
     for target in &targets {
         build_with_output(target, &lib_name, config.silent, mode)?;
     }
 
     recreate_output_dir(&package_name).expect("Could not create package output directory!");
-    create_xcframework_with_output(&targets, &lib_name, &package_name, mode, config.silent)?;
-    create_package_with_output(&package_name, config.silent);
+    create_xcframework_with_output(&targets, &lib_name, &package_name, mode, &config)?;
+    create_package_with_output(&package_name, &config)?;
 
     Ok(())
 }
@@ -217,14 +218,11 @@ fn prompt_package_name(crate_name: &str, accept_all: bool) -> String {
         .unwrap()
 }
 
-fn generate_bindings_with_output(silent: bool) {
-    let spinner = silent
-        .not()
-        .then(|| MainSpinner::with_message(format!("Generating Swift bindings...")));
-
-    generate_bindings().expect("Could not generate UniFFI bindings for udl files!");
-
-    spinner.finish();
+fn generate_bindings_with_output(config: &Config) -> Result<()> {
+    run_step(config, "Generating Swift bindings...", || {
+        generate_bindings()
+            .map_err(|e| format!("Could not generate UniFFI bindings for udl files due to the following error: \n {e}").into())
+    })
 }
 
 fn build_with_output(target: &Target, lib_name: &str, silent: bool, mode: Mode) -> Result<()> {
@@ -271,42 +269,32 @@ fn create_xcframework_with_output(
     lib_name: &str,
     package_name: &str,
     mode: Mode,
-    silent: bool,
+    config: &Config,
 ) -> Result<()> {
-    let spinner = silent
-        .not()
-        .then(|| MainSpinner::with_message(format!("Creating XCFramework...")));
+    run_step(config, "Creating XCFramework...", || {
+        // TODO: show command spinner here with xcbuild command
+        let output_dir = PathBuf::from(package_name);
+        // TODO: make this configurable
+        let generated_dir = PathBuf::from("./generated");
 
-    // TODO: show command spinner here with xcbuild command
-    let output_dir = PathBuf::from(package_name);
-    // TODO: make this configurable
-    let generated_dir = PathBuf::from("./generated");
-
-    let result = create_xcframework(targets, lib_name, &generated_dir, &output_dir, mode);
-
-    if result.is_ok() {
-        spinner.finish();
-    } else {
-        spinner.fail();
-        Err("Packaging as XCFramework failed. Aborted!")?;
-    }
-
-    result
+        create_xcframework(targets, lib_name, &generated_dir, &output_dir, mode)
+    })
+    .map_err(|e| format!("Failed to create XCFramework due to the following error: \n {e}").into())
 }
 
-fn create_package_with_output(package_name: &str, silent: bool) {
-    let spinner = silent
-        .not()
-        .then(|| MainSpinner::with_message(format!("Creating Swift Package '{package_name}'...")));
+fn create_package_with_output(package_name: &str, config: &Config) -> Result<()> {
+    run_step(
+        config,
+        format!("Creating Swift Package '{package_name}'..."),
+        || create_swiftpackage(package_name),
+    )?;
 
-    create_swiftpackage(package_name);
-
-    spinner.finish();
-
-    let spinner = silent.not().then(|| {
+    let spinner = config.silent.not().then(|| {
         MainSpinner::with_message(format!(
             "Successfully created Swift Package in '{package_name}/'!"
         ))
     });
     spinner.finish();
+
+    Ok(())
 }
