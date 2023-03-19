@@ -2,7 +2,6 @@ use std::{process::Command, time::Duration};
 
 use indicatif::{MultiProgress, ProgressBar, ProgressStyle};
 
-use crate::targets::Target;
 use crate::CommandInfo;
 
 const TICK_RATE: Duration = Duration::from_millis(30);
@@ -35,10 +34,6 @@ pub struct MainSpinner {
 }
 
 impl MainSpinner {
-    pub fn with_target(target: Target) -> Self {
-        Self::with_message(format!("Building target {}...", target.display_name()))
-    }
-
     pub fn with_message(msg: String) -> Self {
         let spinner_style = main_spinner_style();
 
@@ -111,11 +106,11 @@ pub struct CommandSpinner {
 
 impl CommandSpinner {
     pub fn with_command(command: &Command) -> Self {
-        let spinner_style = ProgressStyle::with_template("\t{msg}").unwrap();
+        let spinner_style = ProgressStyle::with_template("    {msg}").unwrap();
 
         let inner = ProgressBar::new_spinner()
             .with_style(spinner_style)
-            .with_message(command.multiline_info(70).replace('\n', "\n\t\t"));
+            .with_message(command.multiline_info(70).replace('\n', "\n        "));
 
         Self { inner }
     }
@@ -127,14 +122,17 @@ impl Ticking for CommandSpinner {
     }
 
     fn finish(&self) {
-        let spinner_finish_style = ProgressStyle::with_template("\t{msg:.dim}").unwrap();
+        let spinner_finish_style = ProgressStyle::with_template("    {msg:.dim}").unwrap();
 
         self.inner.set_style(spinner_finish_style);
         self.inner.finish();
     }
 
     fn fail(&self) {
-        self.finish()
+        let spinner_fail_style = ProgressStyle::with_template("    {msg:.red}").unwrap();
+
+        self.inner.set_style(spinner_fail_style);
+        self.inner.finish();
     }
 }
 

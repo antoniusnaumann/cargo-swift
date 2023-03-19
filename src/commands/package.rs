@@ -13,7 +13,7 @@ use indicatif::MultiProgress;
 use crate::bindings::generate_bindings;
 use crate::error::*;
 use crate::spinners::*;
-use crate::step::run_step;
+use crate::step::{run_step, run_step_with_commands};
 use crate::swiftpackage::{create_swiftpackage, recreate_output_dir};
 use crate::targets::*;
 use crate::xcframework::create_xcframework;
@@ -62,7 +62,7 @@ pub fn run(
     generate_bindings_with_output(&config)?;
 
     for target in &targets {
-        build_with_output(target, &lib_name, config.silent, mode)?;
+        build_with_output(target, &lib_name, &config, mode)?;
     }
 
     recreate_output_dir(&package_name).expect("Could not create package output directory!");
@@ -225,43 +225,17 @@ fn generate_bindings_with_output(config: &Config) -> Result<()> {
     })
 }
 
-fn build_with_output(target: &Target, lib_name: &str, silent: bool, mode: Mode) -> Result<()> {
-    let multi = silent.not().then(MultiProgress::new);
-    let spinner = silent
-        .not()
-        .then(|| MainSpinner::with_target(target.clone()));
-    multi.add(&spinner);
-    spinner.start();
-
-    for mut command in target.commands(lib_name, mode) {
-        let step = silent.not().then(|| CommandSpinner::with_command(&command));
-        multi.add(&step);
-        step.start();
-
-        let args = if command.get_program().to_string_lossy().contains("cargo") {
-            vec!["--color", "always"]
-        } else {
-            vec![]
-        };
-
-        let output = command
-            .args(args)
-            .stderr(Stdio::piped())
-            .stdout(Stdio::null())
-            .output()
-            .unwrap_or_else(|_| panic!("Failed to execute build command: {}", command.info()));
-
-        if !output.status.success() {
-            step.fail();
-            spinner.fail();
-            return Err(output.stderr.into());
-        }
-
-        step.finish();
+fn build_with_output(target: &Target, lib_name: &str, config: &Config, mode: Mode) -> Result<()> {
+    let mut commands = target.commands(lib_name, mode);
+    for command in &mut commands {
+        command.env("CARGO_TERM_COLOR", "always");
     }
 
-    spinner.finish();
-    Ok(())
+    run_step_with_commands(
+        config,
+        format!("Building target {}", target.display_name()),
+        &mut commands,
+    )
 }
 
 fn create_xcframework_with_output(
