@@ -8,9 +8,9 @@
 
 > A cargo plugin to easily build Swift packages from Rust code
 
-It provides interactive commands for initializing and packaging a Rust library as Swift Package for usage in iOS and macOS apps.
-
-This plugin heavily builds on [swift-bridge](https://github.com/chinedufn/swift-bridge), so if you like the bridging magic between Swift and Rust, check out swift-bridge!
+*cargo swift* provides interactive commands for initializing and packaging a Rust library as Swift Package for usage in iOS and macOS apps.
+This plugin uses Mozilla's [UniFFI](https://github.com/mozilla/uniffi-rs) for bridging between Swift and Rust. To learn more about using UniFFI, read its [User Guide](https://mozilla.github.io/uniffi-rs/Overview.html),
+but note that you can skip the parts about generating bindings and building a swift module as *cargo swift* already takes care of this!
 
 ![](https://github.com/antoniusnaumann/cargo-swift/blob/main/readme/cargo-swift-demo.gif)
 
@@ -24,17 +24,13 @@ Install this plugin, simply run
 ```
 cargo install cargo-swift
 ```
-> **Note**
-> Only Swift Packages that target Apple platforms can include binaries at the moment. 
-> 
-> If you need to target Linux or Windows, you might want to manually setup [swift-bridge](https://github.com/chinedufn/swift-bridge) instead.
 
 ### Using cargo-swift
 You can create a new library crate by running
 ```
 cargo swift init
 ```
-This creates a new Rust library crate with some boilerplate code and some examples to quickly get started with swift-bridge. For full reference, check out [this chapter of the Swift Bridge Book](https://chinedufn.github.io/swift-bridge/bridge-module/index.html)
+This creates a new Rust library crate with some boilerplate code and some examples to quickly get started with UniFFI. For full reference, check out [this chapter of the UniFFI User Guide](https://mozilla.github.io/uniffi-rs/udl_file_spec.html)
 
 To bundle the previously created Rust library as Swift Package, run:
 ```
