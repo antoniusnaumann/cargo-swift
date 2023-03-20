@@ -59,7 +59,7 @@ pub fn run(
         }
     }
 
-    generate_bindings_with_output(&config)?;
+    let namespace = generate_bindings_with_output(&config)?;
 
     for target in &targets {
         build_with_output(target, &lib_name, &config, mode)?;
@@ -67,7 +67,7 @@ pub fn run(
 
     recreate_output_dir(&package_name).expect("Could not create package output directory!");
     create_xcframework_with_output(&targets, &lib_name, &package_name, mode, &config)?;
-    create_package_with_output(&package_name, &config)?;
+    create_package_with_output(&package_name, &namespace, &config)?;
 
     Ok(())
 }
@@ -218,7 +218,7 @@ fn prompt_package_name(crate_name: &str, accept_all: bool) -> String {
         .unwrap()
 }
 
-fn generate_bindings_with_output(config: &Config) -> Result<()> {
+fn generate_bindings_with_output(config: &Config) -> Result<String> {
     run_step(config, "Generating Swift bindings...", || {
         generate_bindings()
             .map_err(|e| format!("Could not generate UniFFI bindings for udl files due to the following error: \n {e}").into())
@@ -256,11 +256,11 @@ fn create_xcframework_with_output(
     .map_err(|e| format!("Failed to create XCFramework due to the following error: \n {e}").into())
 }
 
-fn create_package_with_output(package_name: &str, config: &Config) -> Result<()> {
+fn create_package_with_output(package_name: &str, namespace: &str, config: &Config) -> Result<()> {
     run_step(
         config,
         format!("Creating Swift Package '{package_name}'..."),
-        || create_swiftpackage(package_name),
+        || create_swiftpackage(package_name, namespace),
     )?;
 
     let spinner = config.silent.not().then(|| {

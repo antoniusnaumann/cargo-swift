@@ -5,7 +5,7 @@ use crate::{recreate_dir, Result};
 /// Create artifacts for a swift package given the package name
 ///
 /// **Note**: This method assumes that a directory with the package name and the .xcframework already exists
-pub fn create_swiftpackage(package_name: &str) -> Result<()> {
+pub fn create_swiftpackage(package_name: &str, namespace: &str) -> Result<()> {
     // TODO: Instead of assuming the directory and the xcframework, let this manage directory
     //  recreation and let it copy the xcframework
     let package_manifest =
@@ -18,8 +18,11 @@ pub fn create_swiftpackage(package_name: &str) -> Result<()> {
         .map_err(|e| format!("Could not create module sources directory: \n {e}"))?;
 
     copy(
-        "./generated/sources/lib.swift",
-        format!("{}/Sources/{}/lib.swift", package_name, package_name),
+        format!("./generated/sources/{namespace}.swift"),
+        format!(
+            "{}/Sources/{}/{}.swift",
+            package_name, package_name, namespace
+        ),
     )
     .map_err(|e| format!("Could not copy generated swift source files: \n {e}"))?;
 
