@@ -48,6 +48,9 @@ enum Action {
 
         #[arg(long, ignore_case = true, default_value_t = init::Vcs::Git)]
         vcs: init::Vcs,
+
+        #[arg(short, long)]
+        plain: bool,
     },
 
     #[command()]
@@ -71,7 +74,11 @@ fn main() {
     let config = args.clone().into();
 
     let result = match args.action {
-        Action::Init { crate_name, vcs } => init::run(crate_name, config, vcs),
+        Action::Init {
+            crate_name,
+            vcs,
+            plain,
+        } => init::run(crate_name, config, vcs, plain),
 
         Action::Package {
             platforms,

@@ -2,7 +2,6 @@ use std::fmt::Display;
 use std::fs::{create_dir, write};
 use std::process::Stdio;
 
-use cargo_toml::Manifest;
 use clap::ValueEnum;
 use execute::{command, Execute};
 
@@ -26,9 +25,9 @@ impl Display for Vcs {
     }
 }
 
-pub fn run(crate_name: String, config: Config, vcs: Vcs) -> Result<()> {
+pub fn run(crate_name: String, config: Config, vcs: Vcs, plain: bool) -> Result<()> {
     run_step(&config, "Creating Rust library package...", || {
-        create_project(&crate_name)
+        create_project(&crate_name, plain)
     })?;
 
     match vcs {
@@ -39,21 +38,29 @@ pub fn run(crate_name: String, config: Config, vcs: Vcs) -> Result<()> {
     Ok(())
 }
 
-fn create_project(crate_name: &str) -> Result<()> {
-    let manifest = Manifest::from_str(include_str!("../../Cargo.toml")).unwrap();
-    let cargo_swift_version = manifest.package().version();
+fn create_project(crate_name: &str, plain: bool) -> Result<()> {
+    // let manifest = Manifest::from_str(include_str!("../../Cargo.toml")).unwrap();
+    // let cargo_swift_version = manifest.package().version();
 
     let cargo_toml_content =
         include_str!("../../template/template.Cargo.toml").replace("<CRATE_NAME>", crate_name);
-    let lib_rs_content = include_str!("../../template/template.lib.rs")
-        .replace("<CARGO_SWIFT_VERSION>", cargo_swift_version);
+    let (lib_rs_content, udl_content) = if plain {
+        (
+            include_str!("../../template/template.plain.rs"),
+            include_str!("../../template/template.plain.udl"),
+        )
+    } else {
+        (
+            include_str!("../../template/template.lib.rs"),
+            include_str!("../../template/template.lib.udl"),
+        )
+    };
     let build_rs_content = include_str!("../../template/template.build.rs");
-    let udl_content = include_str!("../../template/template.lib.udl");
 
     write_project_files(
         &cargo_toml_content,
         build_rs_content,
-        &lib_rs_content,
+        lib_rs_content,
         udl_content,
         crate_name,
     )?;
