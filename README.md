@@ -4,6 +4,7 @@
 [![Build](https://github.com/antoniusnaumann/cargo-swift/actions/workflows/ci.yml/badge.svg)](https://github.com/antoniusnaumann/cargo-swift/actions/workflows/ci.yml)
 [![Publish](https://github.com/antoniusnaumann/cargo-swift/actions/workflows/publish.yml/badge.svg)](https://github.com/antoniusnaumann/cargo-swift/actions/workflows/publish.yml)
 [![Clippy](https://github.com/antoniusnaumann/cargo-swift/actions/workflows/clippy.yml/badge.svg)](https://github.com/antoniusnaumann/cargo-swift/actions/workflows/clippy.yml)
+[![Dependency Status](https://deps.rs/repo/github/antoniusnaumann/cargo-swift/status.svg)](https://deps.rs/repo/github/antoniusnaumann/cargo-swift)
 [![Language: Rust](https://img.shields.io/badge/Language-Rust-F46623)](https://www.rust-lang.org)
 
 > A cargo plugin to easily build Swift packages from Rust code
