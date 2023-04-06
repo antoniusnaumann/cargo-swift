@@ -1,0 +1,17 @@
+// Keep this namespace, even when empty - otherwise binding generation will throw an error!
+namespace lib {
+	// You can safely delete this example top-level function definition
+	u64 add(u64 a, u64 b); 
+};
+
+// You can safely delete this example data structure definition
+dictionary Example {
+	sequence<string> items;
+	double? value;
+};
+
+// You can safely delete this example interface definition
+interface Greeter {
+	constructor(string name);
+	string greet();
+};
