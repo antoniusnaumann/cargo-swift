@@ -11,6 +11,7 @@
 		40B2EC4E29DF56320028C4E8 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40B2EC4D29DF56320028C4E8 /* ContentView.swift */; };
 		40B2EC5029DF56340028C4E8 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 40B2EC4F29DF56340028C4E8 /* Assets.xcassets */; };
 		40B2EC5429DF56340028C4E8 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 40B2EC5329DF56340028C4E8 /* Preview Assets.xcassets */; };
+		40B2EC5E29E08C0F0028C4E8 /* Greeter in Frameworks */ = {isa = PBXBuildFile; productRef = 40B2EC5D29E08C0F0028C4E8 /* Greeter */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -20,6 +21,7 @@
 		40B2EC4F29DF56340028C4E8 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		40B2EC5129DF56340028C4E8 /* HelloWorld.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = HelloWorld.entitlements; sourceTree = "<group>"; };
 		40B2EC5329DF56340028C4E8 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
+		40B2EC5B29E08B500028C4E8 /* Greeter */ = {isa = PBXFileReference; lastKnownFileType = wrapper; name = Greeter; path = ../greeter/Greeter; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -27,6 +29,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				40B2EC5E29E08C0F0028C4E8 /* Greeter in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -36,8 +39,10 @@
 		40B2EC3F29DF56320028C4E8 = {
 			isa = PBXGroup;
 			children = (
+				40B2EC5A29E08B4F0028C4E8 /* Packages */,
 				40B2EC4A29DF56320028C4E8 /* HelloWorld */,
 				40B2EC4929DF56320028C4E8 /* Products */,
+				40B2EC5C29E08C0F0028C4E8 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -69,6 +74,21 @@
 			path = "Preview Content";
 			sourceTree = "<group>";
 		};
+		40B2EC5A29E08B4F0028C4E8 /* Packages */ = {
+			isa = PBXGroup;
+			children = (
+				40B2EC5B29E08B500028C4E8 /* Greeter */,
+			);
+			name = Packages;
+			sourceTree = "<group>";
+		};
+		40B2EC5C29E08C0F0028C4E8 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -85,6 +105,9 @@
 			dependencies = (
 			);
 			name = HelloWorld;
+			packageProductDependencies = (
+				40B2EC5D29E08C0F0028C4E8 /* Greeter */,
+			);
 			productName = HelloWorld;
 			productReference = 40B2EC4829DF56320028C4E8 /* HelloWorld.app */;
 			productType = "com.apple.product-type.application";
@@ -350,6 +373,13 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		40B2EC5D29E08C0F0028C4E8 /* Greeter */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = Greeter;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 40B2EC4029DF56320028C4E8 /* Project object */;
 }
