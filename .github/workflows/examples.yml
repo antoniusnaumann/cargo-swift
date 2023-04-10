@@ -15,6 +15,7 @@ jobs:
       matrix:
         os: [macos-latest, macos-11, macos-12]
         path: [./swift-examples/hello-world/greeter]
+        target: ['platform=macOS,arch=arm64', 'platform=macOS,arch=x86_64', 'platform=iOS', 'platform=iOS Simulator']
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v3
@@ -23,3 +24,6 @@ jobs:
     - name: Build example libraries
       working-directory: ${{ matrix.path }}
       run: cargo swift package --accept-all
+    - name: Build example apps
+      working-directory: ${{ matrix.path }}/../app
+      run: xcodebuild -scheme App -destination "${{ matrix.target }}"

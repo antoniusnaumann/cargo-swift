@@ -15,7 +15,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		40B2EC4829DF56320028C4E8 /* HelloWorld.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = HelloWorld.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		40B2EC4829DF56320028C4E8 /* App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = App.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		40B2EC4B29DF56320028C4E8 /* HelloWorldApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelloWorldApp.swift; sourceTree = "<group>"; };
 		40B2EC4D29DF56320028C4E8 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		40B2EC4F29DF56340028C4E8 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -49,7 +49,7 @@
 		40B2EC4929DF56320028C4E8 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				40B2EC4829DF56320028C4E8 /* HelloWorld.app */,
+				40B2EC4829DF56320028C4E8 /* App.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -92,9 +92,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		40B2EC4729DF56320028C4E8 /* HelloWorld */ = {
+		40B2EC4729DF56320028C4E8 /* App */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 40B2EC5729DF56340028C4E8 /* Build configuration list for PBXNativeTarget "HelloWorld" */;
+			buildConfigurationList = 40B2EC5729DF56340028C4E8 /* Build configuration list for PBXNativeTarget "App" */;
 			buildPhases = (
 				40B2EC4429DF56320028C4E8 /* Sources */,
 				40B2EC4529DF56320028C4E8 /* Frameworks */,
@@ -104,12 +104,12 @@
 			);
 			dependencies = (
 			);
-			name = HelloWorld;
+			name = App;
 			packageProductDependencies = (
 				40B2EC5D29E08C0F0028C4E8 /* Greeter */,
 			);
 			productName = HelloWorld;
-			productReference = 40B2EC4829DF56320028C4E8 /* HelloWorld.app */;
+			productReference = 40B2EC4829DF56320028C4E8 /* App.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -140,7 +140,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				40B2EC4729DF56320028C4E8 /* HelloWorld */,
+				40B2EC4729DF56320028C4E8 /* App */,
 			);
 		};
 /* End PBXProject section */
@@ -363,7 +363,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		40B2EC5729DF56340028C4E8 /* Build configuration list for PBXNativeTarget "HelloWorld" */ = {
+		40B2EC5729DF56340028C4E8 /* Build configuration list for PBXNativeTarget "App" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				40B2EC5829DF56340028C4E8 /* Debug */,
