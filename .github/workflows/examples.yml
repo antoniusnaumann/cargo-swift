@@ -29,4 +29,4 @@ jobs:
       run: cargo swift package --accept-all
     - name: Build example apps
       working-directory: ${{ matrix.path }}/../app
-      run: xcodebuild -scheme App -destination "${{ matrix.target }}"
+      run: xcodebuild -scheme App -destination "${{ matrix.target }}" CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO
