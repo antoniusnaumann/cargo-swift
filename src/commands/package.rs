@@ -12,6 +12,7 @@ use indicatif::MultiProgress;
 
 use crate::bindings::generate_bindings;
 use crate::error::*;
+use crate::lib_type::LibType;
 use crate::spinners::*;
 use crate::step::{run_step, run_step_with_commands};
 use crate::swiftpackage::{create_swiftpackage, recreate_output_dir};
@@ -61,12 +62,13 @@ pub fn run(
 
     let namespace = generate_bindings_with_output(&config)?;
 
+    let lib_type = LibType::Static;
     for target in &targets {
-        build_with_output(target, &lib_name, &config, mode)?;
+        build_with_output(target, &lib_name, mode, lib_type, &config)?;
     }
 
     recreate_output_dir(&package_name).expect("Could not create package output directory!");
-    create_xcframework_with_output(&targets, &lib_name, &package_name, mode, &config)?;
+    create_xcframework_with_output(&targets, &lib_name, &package_name, mode, lib_type, &config)?;
     create_package_with_output(&package_name, &namespace, &config)?;
 
     Ok(())
@@ -225,8 +227,14 @@ fn generate_bindings_with_output(config: &Config) -> Result<String> {
     })
 }
 
-fn build_with_output(target: &Target, lib_name: &str, config: &Config, mode: Mode) -> Result<()> {
-    let mut commands = target.commands(lib_name, mode);
+fn build_with_output(
+    target: &Target,
+    lib_name: &str,
+    mode: Mode,
+    lib_type: LibType,
+    config: &Config,
+) -> Result<()> {
+    let mut commands = target.commands(lib_name, mode, lib_type);
     for command in &mut commands {
         command.env("CARGO_TERM_COLOR", "always");
     }
@@ -243,6 +251,7 @@ fn create_xcframework_with_output(
     lib_name: &str,
     package_name: &str,
     mode: Mode,
+    lib_type: LibType,
     config: &Config,
 ) -> Result<()> {
     run_step(config, "Creating XCFramework...", || {
@@ -251,7 +260,14 @@ fn create_xcframework_with_output(
         // TODO: make this configurable
         let generated_dir = PathBuf::from("./generated");
 
-        create_xcframework(targets, lib_name, &generated_dir, &output_dir, mode)
+        create_xcframework(
+            targets,
+            lib_name,
+            &generated_dir,
+            &output_dir,
+            mode,
+            lib_type,
+        )
     })
     .map_err(|e| format!("Failed to create XCFramework due to the following error: \n {e}").into())
 }

@@ -3,6 +3,7 @@ use std::process::{Command, Stdio};
 
 use anyhow::anyhow;
 
+use crate::lib_type::LibType;
 use crate::{Mode, Result, Target};
 
 pub fn create_xcframework(
@@ -11,10 +12,11 @@ pub fn create_xcframework(
     generated_dir: &Path,
     output_dir: &Path,
     mode: Mode,
+    lib_type: LibType,
 ) -> Result<()> {
     let libs: Vec<_> = targets
         .iter()
-        .map(|t| t.library_file(lib_name, mode))
+        .map(|t| t.library_file(lib_name, mode, lib_type))
         .collect();
 
     let headers = generated_dir.join("headers");

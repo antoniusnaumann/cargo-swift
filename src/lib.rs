@@ -9,6 +9,7 @@ mod commands {
 mod bindings;
 mod config;
 mod error;
+mod lib_type;
 mod spinners;
 mod step;
 mod swiftpackage;
