@@ -33,11 +33,16 @@ pub fn run(
     let crate_name = manifest.package.unwrap().name.to_lowercase();
     let package_name =
         package_name.unwrap_or_else(|| prompt_package_name(&crate_name, config.accept_all));
-    let lib_name = manifest
+    let lib = manifest
         .lib
-        .ok_or("No library tag defined in Cargo.toml!")?
-        .name
-        .ok_or("No library name found in Cargo.toml!")?;
+        .ok_or("No library tag defined in Cargo.toml!")?;
+    let lib_name = lib.name.ok_or("No library name found in Cargo.toml!")?;
+    let lib_types = lib
+        .crate_type
+        .iter()
+        .filter_map(|t| t.parse().ok())
+        .collect::<Vec<_>>();
+    let lib_type = pick_lib_type(&lib_types)?;
 
     let platforms = platforms.unwrap_or_else(|| prompt_platforms(config.accept_all));
 
@@ -62,7 +67,6 @@ pub fn run(
 
     let namespace = generate_bindings_with_output(&config)?;
 
-    let lib_type = LibType::Static;
     for target in &targets {
         build_with_output(target, &lib_name, mode, lib_type, &config)?;
     }
@@ -218,6 +222,13 @@ fn prompt_package_name(crate_name: &str, accept_all: bool) -> String {
         .default(default)
         .interact_text()
         .unwrap()
+}
+
+fn pick_lib_type(options: &[LibType]) -> Result<LibType> {
+    // TODO: Prompt user if multiple library types are present
+    let first = options.first().ok_or("No supported library type was specified in Cargo.toml! \n\n Supported types are: \n\t- staticlib \n\t- cdylib")?;
+
+    Ok(*first)
 }
 
 fn generate_bindings_with_output(config: &Config) -> Result<String> {

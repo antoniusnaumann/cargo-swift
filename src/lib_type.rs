@@ -1,3 +1,7 @@
+use std::{fmt::Display, str::FromStr};
+
+use thiserror::Error;
+
 #[derive(Clone, Copy)]
 pub enum LibType {
     Static,
@@ -17,6 +21,34 @@ impl LibType {
         match self {
             LibType::Static => "a",
             LibType::Dynamic => "dylib",
+        }
+    }
+}
+
+#[derive(Debug, Error)]
+pub struct VariantError {
+    input: String,
+}
+
+impl Display for VariantError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_fmt(format_args!(
+            "Unsupported variant for crate-type: {}",
+            &self.input
+        ))
+    }
+}
+
+impl FromStr for LibType {
+    type Err = VariantError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "cdylib" => Ok(Self::Dynamic),
+            "staticlib" => Ok(Self::Static),
+            _ => Err(VariantError {
+                input: String::from(s),
+            }),
         }
     }
 }
