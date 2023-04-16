@@ -44,8 +44,8 @@ impl FromStr for LibType {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "cdylib" => Ok(Self::Dynamic),
             "staticlib" => Ok(Self::Static),
+            "cdylib" => Ok(Self::Dynamic),
             _ => Err(VariantError {
                 input: String::from(s),
             }),

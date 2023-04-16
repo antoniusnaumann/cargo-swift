@@ -1,3 +1,4 @@
+use std::fs::read;
 use std::ops::Not;
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
@@ -27,8 +28,8 @@ pub fn run(
     mode: Mode,
 ) -> Result<()> {
     // TODO: Allow path as optional argument to take other directories than current directory
-    let manifest =
-        Manifest::from_path("./Cargo.toml").expect("Could not find Cargo.toml in this directory!");
+    let manifest = Manifest::from_slice(&read("./Cargo.toml")?)
+        .expect("Could not find Cargo.toml in this directory!");
 
     let crate_name = manifest.package.unwrap().name.to_lowercase();
     let package_name =
