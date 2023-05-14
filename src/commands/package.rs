@@ -226,6 +226,11 @@ fn prompt_package_name(crate_name: &str, accept_all: bool) -> String {
 }
 
 fn pick_lib_type(options: &[LibType]) -> Result<LibType> {
+    // TODO: Remove on next breaking version bump, this is only here to not induce a breaking change in the tools behavior
+    if options.iter().any(|i| matches!(&i, LibType::Dynamic)) {
+        return Ok(LibType::Dynamic);
+    }
+
     // TODO: Prompt user if multiple library types are present
     let first = options.first().ok_or("No supported library type was specified in Cargo.toml! \n\n Supported types are: \n\t- staticlib \n\t- cdylib")?;
 
