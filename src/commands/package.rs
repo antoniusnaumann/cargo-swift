@@ -260,7 +260,24 @@ fn build_with_output(
         config,
         format!("Building target {}", target.display_name()),
         &mut commands,
-    )
+    )?;
+
+    if matches!(lib_type, LibType::Dynamic) {
+        let command = command(format!(
+            "install_name_tool -id @rpath/{} {}",
+            target.library_file_name(lib_name, lib_type),
+            target.library_path(lib_name, mode, lib_type)
+        ));
+        // install_name_tool -id @rpath/libmylib.dylib libmylib.dylib
+
+        run_step_with_commands(
+            config,
+            format!("Setting library install ID for {}", target.display_name()),
+            &mut vec![command],
+        )?;
+    }
+
+    Ok(())
 }
 
 fn create_xcframework_with_output(

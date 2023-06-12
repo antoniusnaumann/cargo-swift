@@ -16,7 +16,7 @@ pub fn create_xcframework(
 ) -> Result<()> {
     let libs: Vec<_> = targets
         .iter()
-        .map(|t| t.library_file(lib_name, mode, lib_type))
+        .map(|t| t.library_path(lib_name, mode, lib_type))
         .collect();
 
     let headers = generated_dir.join("headers");

@@ -53,13 +53,13 @@ impl Target {
             Target::Universal { architectures, .. } => {
                 let path = self.library_directory(mode);
 
-                let target_name = format!("lib{}.{}", lib_name, lib_type.file_extension());
+                let target_name = self.library_file_name(lib_name, lib_type);
                 let component_paths: Vec<_> = architectures
                     .iter()
                     .map(|arch| format!("./target/{arch}/{mode_str}/{target_name}"))
                     .collect();
                 let args = component_paths.join(" ");
-                let target_path = self.library_file(lib_name, mode, lib_type);
+                let target_path = self.library_path(lib_name, mode, lib_type);
 
                 let make_dir = command(format!("mkdir -p {path}"));
                 let lipo = command(format!("lipo {args} -create -output {target_path}"));
@@ -116,13 +116,16 @@ impl Target {
         }
     }
 
-    pub fn library_file(&self, lib_name: &str, mode: Mode, lib_type: LibType) -> String {
+    pub fn library_path(&self, lib_name: &str, mode: Mode, lib_type: LibType) -> String {
         format!(
-            "{}/lib{}.{}",
+            "{}/{}",
             self.library_directory(mode),
-            lib_name,
-            lib_type.file_extension()
+            self.library_file_name(lib_name, lib_type)
         )
+    }
+
+    pub fn library_file_name(&self, lib_name: &str, lib_type: LibType) -> String {
+        format!("lib{}.{}", lib_name, lib_type.file_extension())
     }
 }
 
