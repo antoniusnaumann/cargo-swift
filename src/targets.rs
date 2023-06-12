@@ -68,6 +68,23 @@ impl Target {
         }
     }
 
+    fn rpath_install_id_commands(
+        &self,
+        lib_name: &str,
+        mode: Mode,
+        lib_type: LibType,
+    ) -> Vec<Command> {
+        if matches!(lib_type, LibType::Dynamic) {
+            vec![command(format!(
+                "install_name_tool -id @rpath/{} {}",
+                self.library_file_name(lib_name, lib_type),
+                self.library_path(lib_name, mode, lib_type)
+            ))]
+        } else {
+            vec![]
+        }
+    }
+
     /// Generates all commands necessary to build this target
     ///
     /// This function returns a list of commands that should be executed in their given
@@ -76,6 +93,7 @@ impl Target {
         self.cargo_build_commands(mode)
             .into_iter()
             .chain(self.lipo_commands(lib_name, mode, lib_type))
+            .chain(self.rpath_install_id_commands(lib_name, mode, lib_type))
             .collect()
     }
 
