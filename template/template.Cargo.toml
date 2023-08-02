@@ -10,7 +10,7 @@ crate-type = ["<LIB_TYPE>"]
 name = "mylib"
 
 [dependencies]
-uniffi = "0.23"
+uniffi = "0.24"
 
 [build-dependencies]
-uniffi = { version = "0.23", features = ["build"] }
+uniffi = { version = "0.24", features = ["build"] }
