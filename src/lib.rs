@@ -20,6 +20,7 @@ pub use command::*;
 pub use commands::*;
 pub use config::*;
 pub use error::*;
+pub use lib_type::LibType;
 pub use targets::*;
 
 use std::fs::{create_dir, remove_dir_all};

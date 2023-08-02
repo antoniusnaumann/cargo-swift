@@ -7,6 +7,7 @@ use execute::{command, Execute};
 
 use crate::config::Config;
 use crate::error::Result;
+use crate::lib_type::LibType;
 use crate::step::run_step;
 
 #[derive(ValueEnum, Debug, Clone)]
@@ -25,9 +26,15 @@ impl Display for Vcs {
     }
 }
 
-pub fn run(crate_name: String, config: Config, vcs: Vcs, plain: bool) -> Result<()> {
+pub fn run(
+    crate_name: String,
+    config: Config,
+    vcs: Vcs,
+    lib_type: LibType,
+    plain: bool,
+) -> Result<()> {
     run_step(&config, "Creating Rust library package...", || {
-        create_project(&crate_name, plain)
+        create_project(&crate_name, lib_type, plain)
     })?;
 
     match vcs {
@@ -38,12 +45,13 @@ pub fn run(crate_name: String, config: Config, vcs: Vcs, plain: bool) -> Result<
     Ok(())
 }
 
-fn create_project(crate_name: &str, plain: bool) -> Result<()> {
+fn create_project(crate_name: &str, lib_type: LibType, plain: bool) -> Result<()> {
     // let manifest = Manifest::from_str(include_str!("../../Cargo.toml")).unwrap();
     // let cargo_swift_version = manifest.package().version();
 
-    let cargo_toml_content =
-        include_str!("../../template/template.Cargo.toml").replace("<CRATE_NAME>", crate_name);
+    let cargo_toml_content = include_str!("../../template/template.Cargo.toml")
+        .replace("<CRATE_NAME>", crate_name)
+        .replace("<LIB_TYPE>", lib_type.identifier());
     let (lib_rs_content, udl_content) = if plain {
         (
             include_str!("../../template/template.plain.rs"),

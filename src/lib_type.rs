@@ -1,8 +1,10 @@
 use std::{fmt::Display, str::FromStr};
 
+use clap::ValueEnum;
 use thiserror::Error;
 
-#[derive(PartialEq, Eq, Clone, Copy)]
+#[derive(ValueEnum, Debug, PartialEq, Eq, Clone, Copy)]
+#[value()]
 pub enum LibType {
     Static,
     Dynamic,
@@ -21,6 +23,15 @@ impl LibType {
         match self {
             LibType::Static => "a",
             LibType::Dynamic => "dylib",
+        }
+    }
+}
+
+impl Display for LibType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Static => write!(f, "static"),
+            Self::Dynamic => write!(f, "dynamic"),
         }
     }
 }

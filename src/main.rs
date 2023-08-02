@@ -1,4 +1,4 @@
-use cargo_swift::{init, package, Config, Mode};
+use cargo_swift::{init, package, Config, LibType, Mode};
 use clap::{Parser, Subcommand};
 
 #[derive(Parser)]
@@ -49,6 +49,9 @@ enum Action {
         #[arg(long, ignore_case = true, default_value_t = init::Vcs::Git)]
         vcs: init::Vcs,
 
+        #[arg(long, ignore_case = true, default_value_t = LibType::Static)]
+        lib_type: LibType,
+
         #[arg(short, long)]
         plain: bool,
     },
@@ -67,7 +70,7 @@ enum Action {
         /// Build package optimized for release (default: debug)
         release: bool,
 
-        #[arg(long = "lib-type", default_value_t = package::LibTypeArg::Automatic)]
+        #[arg(long, ignore_case = true, default_value_t = package::LibTypeArg::Automatic)]
         /// Chose the how the library should be build. By default, this will be derived from the lib type provided in Cargo.toml
         lib_type: package::LibTypeArg,
     },
@@ -81,8 +84,9 @@ fn main() {
         Action::Init {
             crate_name,
             vcs,
+            lib_type,
             plain,
-        } => init::run(crate_name, config, vcs, plain),
+        } => init::run(crate_name, config, vcs, lib_type, plain),
 
         Action::Package {
             platforms,
