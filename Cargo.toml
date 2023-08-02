@@ -11,21 +11,21 @@ categories = ["command-line-utilities", "development-tools", "development-tools:
 exclude = ["/readme", "/.github", "/testing"]
 
 [dependencies]
-camino = "1.1.4"
-cargo_toml = "0.15.2"
-clap = { version = "4.1.11", features = ["derive"] }
+camino = "1.1.6"
+cargo_toml = "0.15.3"
+clap = { version = "4.3.19", features = ["derive"] }
 convert_case = "0.6.0"
-serde = { version = "1.0.158", features = ["derive"] }
-regex = "1.7.1"
+serde = { version = "1.0.180", features = ["derive"] }
+regex = "1.9.1"
 
 # Terminal UI
-dialoguer = { version = "0.10.3", default-features = false }
-execute = "0.2.11"
-indicatif = "0.17.3"
+dialoguer = { version = "0.10.4", default-features = false }
+execute = "0.2.12"
+indicatif = "0.17.6"
 
 # FFI Bindings
-uniffi_bindgen = "0.23.0"
+uniffi_bindgen = "0.24.3"
 
 # Error Handling
-anyhow = "1.0.70"
-thiserror = "1.0.40"
+anyhow = "1.0.72"
+thiserror = "1.0.44"

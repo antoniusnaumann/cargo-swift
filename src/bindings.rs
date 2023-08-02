@@ -3,6 +3,7 @@ use std::fs::{self, create_dir};
 use crate::Result;
 use camino::Utf8Path;
 use regex::Regex;
+use uniffi_bindgen::bindings::TargetLanguage;
 
 use crate::recreate_dir;
 
@@ -16,7 +17,14 @@ pub fn generate_bindings() -> Result<String> {
     create_dir(&headers)?;
     create_dir(&sources)?;
 
-    uniffi_bindgen::generate_bindings(udl_file, None, vec!["swift"], Some(out_dir), None, false)?;
+    uniffi_bindgen::generate_bindings(
+        udl_file,
+        None,
+        vec![TargetLanguage::Swift],
+        Some(out_dir),
+        None,
+        false,
+    )?;
 
     let namespace = detect_namespace(udl_file)?;
 
