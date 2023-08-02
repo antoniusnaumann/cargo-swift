@@ -66,6 +66,10 @@ enum Action {
         #[arg(short, long)]
         /// Build package optimized for release (default: debug)
         release: bool,
+
+        #[arg(long = "lib-type", default_value_t = package::LibTypeArg::Automatic)]
+        /// Chose the how the library should be build. By default, this will be derived from the lib type provided in Cargo.toml
+        lib_type: package::LibTypeArg,
     },
 }
 
@@ -84,11 +88,13 @@ fn main() {
             platforms,
             package_name,
             release,
+            lib_type,
         } => package::run(
             platforms,
             package_name,
             config,
             if release { Mode::Release } else { Mode::Debug },
+            lib_type,
         ),
     };
 

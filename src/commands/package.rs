@@ -1,3 +1,4 @@
+use std::fmt::Display;
 use std::fs::read;
 use std::ops::Not;
 use std::path::PathBuf;
@@ -21,11 +22,40 @@ use crate::targets::*;
 use crate::xcframework::create_xcframework;
 use crate::*;
 
+#[derive(ValueEnum, Debug, Clone)]
+#[value()]
+pub enum LibTypeArg {
+    Automatic,
+    Dynamic,
+    Static,
+}
+
+impl Display for LibTypeArg {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Automatic => write!(f, "automatic"),
+            Self::Static => write!(f, "static"),
+            Self::Dynamic => write!(f, "dynamic"),
+        }
+    }
+}
+
+impl From<LibTypeArg> for Option<LibType> {
+    fn from(value: LibTypeArg) -> Self {
+        match value {
+            LibTypeArg::Automatic => None,
+            LibTypeArg::Dynamic => Some(LibType::Dynamic),
+            LibTypeArg::Static => Some(LibType::Static),
+        }
+    }
+}
+
 pub fn run(
     platforms: Option<Vec<Platform>>,
     package_name: Option<String>,
     config: Config,
     mode: Mode,
+    lib_type_arg: LibTypeArg,
 ) -> Result<()> {
     // TODO: Allow path as optional argument to take other directories than current directory
     let manifest = Manifest::from_slice(&read("./Cargo.toml")?)
@@ -43,7 +73,7 @@ pub fn run(
         .iter()
         .filter_map(|t| t.parse().ok())
         .collect::<Vec<_>>();
-    let lib_type = pick_lib_type(&lib_types)?;
+    let lib_type = pick_lib_type(&lib_types, lib_type_arg.into())?;
 
     let platforms = platforms.unwrap_or_else(|| prompt_platforms(config.accept_all));
 
@@ -225,7 +255,12 @@ fn prompt_package_name(crate_name: &str, accept_all: bool) -> String {
         .unwrap()
 }
 
-fn pick_lib_type(options: &[LibType]) -> Result<LibType> {
+fn pick_lib_type(options: &[LibType], suggested: Option<LibType>) -> Result<LibType> {
+    // TODO: ERROR HANDLING if a non-matching type is given, this should return an error instead of defaulting to automatic
+    if let Some(result) = suggested.and_then(|t| options.iter().find(|&&i| t == i)) {
+        return Ok(*result);
+    }
+
     // TODO: Remove on next breaking version bump, this is only here to not induce a breaking change in the tools behavior
     if options.iter().any(|i| matches!(&i, LibType::Dynamic)) {
         return Ok(LibType::Dynamic);

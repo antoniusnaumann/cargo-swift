@@ -2,7 +2,7 @@ use std::{fmt::Display, str::FromStr};
 
 use thiserror::Error;
 
-#[derive(Clone, Copy)]
+#[derive(PartialEq, Eq, Clone, Copy)]
 pub enum LibType {
     Static,
     Dynamic,
