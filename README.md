@@ -46,33 +46,7 @@ If some required toolchains for the selected target platforms are missing, cargo
 That's it! You can now include the created package in an iOS or macOS app via Swift Package Manager.
 
 ### Configuration
-> **Warning**
-> This section describes a feature that is not yet implemented.
-
-Configuration options can be supplied to cargo-swift in multiple ways:
-
-1. Command-line arguments (i.e. ```--platforms macos ios```)
-2. Meta-data under ```[package.metadata.swiftpackage]``` tag in crate-level Cargo.toml
-3. Meta-data under ```[workspace.metadata.swiftpackage]``` tag in workspace-level Cargo.toml
-4. Prompt configuration values that are not provided by the methods above
-
-These configuration values take precedence over each other in the order listed above, so an explicitly given command-line argument will always override a value given in the config file.
-
-#### Metadata
-```cargo swift package``` can be invoked with the ```--save``` option to store all given configuration values in the crate's Cargo.toml. Alternatively, they can be filled in manually.
-The following configuration values can be included:
-
-```TOML
-# ...
-[package.metadata.swiftpackage]
-# Name of your package as seen by Swift (upper camel case is recommended)
-name = "YourSwiftPackageName"
-# Target platform identifiers (case-insensitive). Currently supported platforms are: macos, ios
-platforms = ["ios", "macos"]
-# ...
-````
-
-Target platforms may also be set in workspace-level Cargo.toml under a ```[workspace.metadata.swiftpackage]``` instead.
+As of now, configuration can only be supplied via command line arguments. Most of the time, the default should be fine - however, sometimes it might be useful to store configuration persistently. You can find a draft of how this might look in CONFIG-DRAFT.md.
 
 ## License
 ### Apache-2.0
