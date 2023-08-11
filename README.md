@@ -46,7 +46,7 @@ If some required toolchains for the selected target platforms are missing, cargo
 That's it! You can now include the created package in an iOS or macOS app via Swift Package Manager.
 
 ### Configuration
-As of now, configuration can only be supplied via command line arguments. Most of the time, the default should be fine - however, sometimes it might be useful to store configuration persistently. You can find a draft of how this might look in CONFIG-DRAFT.md.
+As of now, configuration can only be supplied via command line arguments. Most of the time, the default should be fine - however, sometimes it might be useful to store configuration persistently. You can find a draft of how this might look in [CONFIG-DRAFT.md](/CONFIG-DRAFT.md).
 
 ## License
 ### Apache-2.0

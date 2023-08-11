@@ -1,7 +1,7 @@
 # Configuration
 > **Warning**
 > This section describes a feature that is not yet (fully) implemented.
-> If you have thoughts on this draft, feel free to comment on the relevant issues in the issue section or open a new one!
+> If you have thoughts on this draft, feel free to comment on the relevant issues in the issue section or [open a new one](https://github.com/antoniusnaumann/cargo-swift/issues)!
 
 Configuration options can be supplied to cargo-swift in multiple ways:
 
