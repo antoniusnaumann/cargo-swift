@@ -38,7 +38,13 @@ impl Target {
 
         self.architectures()
             .into_iter()
-            .map(|arch| command(format!("cargo build --target {arch} {flag}")))
+            // TODO: Setting `--target-dir` is a quick fix to make cargo swift package work for crates that
+            //     are contained in a workspace as described in issue #24, remove this once #7 is implemented
+            .map(|arch| {
+                command(format!(
+                    "cargo build --target {arch} {flag} --target-dir ./target"
+                ))
+            })
             .collect()
     }
 
