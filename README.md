@@ -14,7 +14,7 @@
 
 *cargo swift* provides interactive commands for initializing and packaging a Rust library as Swift Package for usage in iOS and macOS apps.
 This plugin uses Mozilla's [UniFFI](https://github.com/mozilla/uniffi-rs) for bridging between Swift and Rust. To learn more about using UniFFI, read its [User Guide](https://mozilla.github.io/uniffi-rs/Overview.html),
-but note that you can skip the parts about generating bindings and building a swift module as *cargo swift* already takes care of this!
+but note that you can **skip** the parts about generating bindings (section 2.4) and building a swift module (sections 10. and 11.) as *cargo swift* already takes care of this!
 
 ![](https://github.com/antoniusnaumann/cargo-swift/blob/main/readme/cargo-swift-demo.gif)
 
