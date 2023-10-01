@@ -16,6 +16,7 @@ func fileExists(atPath path: String) -> Bool {
 print("Creating project...")
 let cargoSwiftInit = Process()
 let projectName = "swift-project"
+let libName = "swift_project"
 let packageName = "SwiftProject"
 cargoSwiftInit.executableURL = URL(fileURLWithPath: "/usr/bin/env")
 cargoSwiftInit.arguments = ["cargo", "swift", "init", projectName, "-y", "--silent"]
@@ -52,7 +53,7 @@ guard dirExists(atPath: "\(projectName)/\(packageName)/Sources/\(packageName)") 
 	error("No \"\(packageName)/\" directory found in sources directory")
 	exit(1)
 }
-guard fileExists(atPath: "\(projectName)/\(packageName)/Sources/\(packageName)/lib.swift") else { 
+guard fileExists(atPath: "\(projectName)/\(packageName)/Sources/\(packageName)/\(libName).swift") else { 
 	error("No lib.swift file found in module")
 	exit(1)
 }
