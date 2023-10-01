@@ -13,7 +13,10 @@ jobs:
   tests:
     strategy:
       matrix:
-        path: [./swift-examples/hello-world/greeter]
+        path: [
+            './swift-examples/hello-world/greeter',
+            './swift-examples/hello-world-macro/greeter'
+          ]
         target: [
             'platform=macOS,arch=x86_64', 
             'generic/platform=iOS',
