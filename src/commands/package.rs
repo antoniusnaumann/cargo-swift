@@ -96,11 +96,11 @@ pub fn run(
         }
     }
 
-    let namespace = generate_bindings_with_output(&config)?;
-
     for target in &targets {
         build_with_output(target, &lib_name, mode, lib_type, &config)?;
     }
+
+    let namespace = generate_bindings_with_output(&config)?;
 
     recreate_output_dir(&package_name).expect("Could not create package output directory!");
     create_xcframework_with_output(&targets, &lib_name, &package_name, mode, lib_type, &config)?;
