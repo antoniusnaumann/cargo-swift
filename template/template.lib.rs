@@ -29,4 +29,13 @@ impl Greeter {
     }
 }
 
+// Instead of adding bindings in lib.udl, you can also use UniFFIs macros
+// Note that you have to keep the .udl file and its namespace if you are using macros
+//
+// You can read more about UniFFI macros here: https://mozilla.github.io/uniffi-rs/proc_macro/index.html
+#[uniffi::export]
+pub fn subtract(a: u64, b: u64) -> u64 {
+    a - b
+}
+
 // ... and much more! For more information about bindings, read the UniFFI book: https://mozilla.github.io/uniffi-rs/udl_file_spec.html

@@ -48,19 +48,20 @@ pub fn run(
 fn create_project(crate_name: &str, lib_type: LibType, plain: bool) -> Result<()> {
     // let manifest = Manifest::from_str(include_str!("../../Cargo.toml")).unwrap();
     // let cargo_swift_version = manifest.package().version();
-
+    let namespace = crate_name.replace('-', "_");
     let cargo_toml_content = include_str!("../../template/template.Cargo.toml")
         .replace("<CRATE_NAME>", crate_name)
+        .replace("<NAMESPACE>", &namespace)
         .replace("<LIB_TYPE>", lib_type.identifier());
     let (lib_rs_content, udl_content) = if plain {
         (
             include_str!("../../template/template.plain.rs"),
-            include_str!("../../template/template.plain.udl"),
+            include_str!("../../template/template.plain.udl").replace("<NAMESPACE>", &namespace),
         )
     } else {
         (
             include_str!("../../template/template.lib.rs"),
-            include_str!("../../template/template.lib.udl"),
+            include_str!("../../template/template.lib.udl").replace("<NAMESPACE>", &namespace),
         )
     };
     let build_rs_content = include_str!("../../template/template.build.rs");
@@ -69,7 +70,7 @@ fn create_project(crate_name: &str, lib_type: LibType, plain: bool) -> Result<()
         &cargo_toml_content,
         build_rs_content,
         lib_rs_content,
-        udl_content,
+        &udl_content,
         crate_name,
     )?;
 
