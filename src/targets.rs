@@ -1,4 +1,4 @@
-use std::process::Command;
+use std::{fmt::Display, process::Command};
 
 use execute::command;
 
@@ -29,6 +29,15 @@ pub enum Mode {
     Release,
 }
 
+impl Display for Mode {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Mode::Debug => write!(f, "debug"),
+            Mode::Release => write!(f, "release"),
+        }
+    }
+}
+
 impl Target {
     fn cargo_build_commands(&self, mode: Mode) -> Vec<Command> {
         let flag = match mode {
@@ -49,20 +58,16 @@ impl Target {
     }
 
     fn lipo_commands(&self, lib_name: &str, mode: Mode, lib_type: LibType) -> Vec<Command> {
-        let mode_str = match mode {
-            Mode::Debug => "debug",
-            Mode::Release => "release",
-        };
-
         match self {
             Target::Single { .. } => vec![],
             Target::Universal { architectures, .. } => {
                 let path = self.library_directory(mode);
 
-                let target_name = self.library_file_name(lib_name, lib_type);
+                let target = target_dir();
+                let target_name = library_file_name(lib_name, lib_type);
                 let component_paths: Vec<_> = architectures
                     .iter()
-                    .map(|arch| format!("./target/{arch}/{mode_str}/{target_name}"))
+                    .map(|arch| format!("{target}/{arch}/{mode}/{target_name}"))
                     .collect();
                 let args = component_paths.join(" ");
                 let target_path = self.library_path(lib_name, mode, lib_type);
@@ -83,7 +88,7 @@ impl Target {
         if matches!(lib_type, LibType::Dynamic) {
             vec![command(format!(
                 "install_name_tool -id @rpath/{} {}",
-                self.library_file_name(lib_name, lib_type),
+                library_file_name(lib_name, lib_type),
                 self.library_path(lib_name, mode, lib_type)
             ))]
         } else {
@@ -134,9 +139,11 @@ impl Target {
             Mode::Release => "release",
         };
 
+        let target = target_dir();
+
         match self {
-            Target::Single { architecture, .. } => format!("./target/{architecture}/{mode}"),
-            Target::Universal { universal_name, .. } => format!("./target/{universal_name}/{mode}"),
+            Target::Single { architecture, .. } => format!("{target}/{architecture}/{mode}"),
+            Target::Universal { universal_name, .. } => format!("{target}/{universal_name}/{mode}"),
         }
     }
 
@@ -144,13 +151,17 @@ impl Target {
         format!(
             "{}/{}",
             self.library_directory(mode),
-            self.library_file_name(lib_name, lib_type)
+            library_file_name(lib_name, lib_type)
         )
     }
+}
 
-    pub fn library_file_name(&self, lib_name: &str, lib_type: LibType) -> String {
-        format!("lib{}.{}", lib_name, lib_type.file_extension())
-    }
+pub fn library_file_name(lib_name: &str, lib_type: LibType) -> String {
+    format!("lib{}.{}", lib_name, lib_type.file_extension())
+}
+
+pub fn target_dir() -> &'static str {
+    "./target"
 }
 
 #[derive(Clone, Copy, Debug)]

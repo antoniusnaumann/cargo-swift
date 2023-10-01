@@ -4,6 +4,7 @@ use std::ops::Not;
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
 
+use camino::Utf8PathBuf;
 use cargo_toml::Manifest;
 use clap::ValueEnum;
 use convert_case::{Case, Casing};
@@ -100,7 +101,7 @@ pub fn run(
         build_with_output(target, &lib_name, mode, lib_type, &config)?;
     }
 
-    let namespace = generate_bindings_with_output(&config)?;
+    let namespace = generate_bindings_with_output(&targets, &lib_name, mode, lib_type, &config)?;
 
     recreate_output_dir(&package_name).expect("Could not create package output directory!");
     create_xcframework_with_output(&targets, &lib_name, &package_name, mode, lib_type, &config)?;
@@ -272,9 +273,21 @@ fn pick_lib_type(options: &[LibType], suggested: Option<LibType>) -> Result<LibT
     Ok(*first)
 }
 
-fn generate_bindings_with_output(config: &Config) -> Result<String> {
+fn generate_bindings_with_output(
+    targets: &[Target],
+    lib_name: &str,
+    mode: Mode,
+    lib_type: LibType,
+    config: &Config,
+) -> Result<String> {
     run_step(config, "Generating Swift bindings...", || {
-        generate_bindings()
+        let lib_file = library_file_name(lib_name, lib_type);
+        let target = target_dir();
+        let lib_path: Option<Utf8PathBuf> = targets
+            .first()
+            .and_then(|t| t.architectures().first().cloned())
+            .map(|arch| format!("{target}/{arch}/{mode}/{lib_file}").into());
+        generate_bindings(lib_path.as_deref())
             .map_err(|e| format!("Could not generate UniFFI bindings for udl files due to the following error: \n {e}").into())
     })
 }

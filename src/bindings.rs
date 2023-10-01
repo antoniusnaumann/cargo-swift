@@ -7,7 +7,7 @@ use uniffi_bindgen::bindings::TargetLanguage;
 
 use crate::recreate_dir;
 
-pub fn generate_bindings() -> Result<String> {
+pub fn generate_bindings(lib_path: Option<&Utf8Path>) -> Result<String> {
     let udl_file = Utf8Path::new("./src/lib.udl");
     let out_dir = Utf8Path::new("./generated");
     let headers = out_dir.join("headers");
@@ -22,7 +22,7 @@ pub fn generate_bindings() -> Result<String> {
         None,
         vec![TargetLanguage::Swift],
         Some(out_dir),
-        None,
+        lib_path,
         false,
     )?;
 
