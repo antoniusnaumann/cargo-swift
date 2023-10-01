@@ -8,7 +8,7 @@ license = "MIT OR Apache-2.0"
 repository = "https://github.com/antoniusnaumann/cargo-swift"
 keywords = ["macos", "ios", "uniffi", "spm", "swift"]
 categories = ["command-line-utilities", "development-tools", "development-tools::build-utils", "development-tools::cargo-plugins", "development-tools::ffi"]
-exclude = ["/readme", "/.github", "/testing"]
+exclude = ["/readme", "/.github", "/testing", "/swift-examples", "*-DRAFT.md"]
 
 [dependencies]
 camino = "1.1.6"
