@@ -54,7 +54,7 @@ guard dirExists(atPath: "\(projectName)/\(packageName)/Sources/\(packageName)") 
 	exit(1)
 }
 guard fileExists(atPath: "\(projectName)/\(packageName)/Sources/\(packageName)/\(libName).swift") else { 
-	error("No lib.swift file found in module")
+	error("No \(libName).swift file found in module")
 	exit(1)
 }
 

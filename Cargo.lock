@@ -756,8 +756,7 @@ checksum = "e51733f11c9c4f72aa0c160008246859e340b00807569a0da0e7a1079b27ba85"
 [[package]]
 name = "uniffi_bindgen"
 version = "0.24.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c2f91fdcd44de3aab35847bf80485f412879dcdd92b5140ee67f948e5eed750e"
+source = "git+https://github.com/mozilla/uniffi-rs.git#68296e0ba571ec4a73d38fd22dd54a7dd5ccb046"
 dependencies = [
  "anyhow",
  "askama",
@@ -770,18 +769,16 @@ dependencies = [
  "once_cell",
  "paste",
  "serde",
- "serde_json",
  "toml 0.5.11",
  "uniffi_meta",
  "uniffi_testing",
- "weedle2",
+ "uniffi_udl",
 ]
 
 [[package]]
 name = "uniffi_checksum_derive"
 version = "0.24.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d1b354a9bd654cc6547d461ccd60a10eb6c7473178f12d8ff91cf4340ae947e8"
+source = "git+https://github.com/mozilla/uniffi-rs.git#68296e0ba571ec4a73d38fd22dd54a7dd5ccb046"
 dependencies = [
  "quote",
  "syn",
@@ -790,12 +787,10 @@ dependencies = [
 [[package]]
 name = "uniffi_meta"
 version = "0.24.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f815bba89a6585954c089c53a775d166c0334c907be0e462bf0f0ac0494656e7"
+source = "git+https://github.com/mozilla/uniffi-rs.git#68296e0ba571ec4a73d38fd22dd54a7dd5ccb046"
 dependencies = [
  "anyhow",
  "bytes",
- "serde",
  "siphasher",
  "uniffi_checksum_derive",
 ]
@@ -803,16 +798,24 @@ dependencies = [
 [[package]]
 name = "uniffi_testing"
 version = "0.24.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1048d7c54816dc27ed4041fe952d42c7cb88e711cf3299e36ee70df7692c4a39"
+source = "git+https://github.com/mozilla/uniffi-rs.git#68296e0ba571ec4a73d38fd22dd54a7dd5ccb046"
 dependencies = [
  "anyhow",
  "camino",
  "cargo_metadata 0.15.4",
  "fs-err",
  "once_cell",
- "serde",
- "serde_json",
+]
+
+[[package]]
+name = "uniffi_udl"
+version = "0.24.3"
+source = "git+https://github.com/mozilla/uniffi-rs.git#68296e0ba571ec4a73d38fd22dd54a7dd5ccb046"
+dependencies = [
+ "anyhow",
+ "uniffi_meta",
+ "uniffi_testing",
+ "weedle2",
 ]
 
 [[package]]
@@ -830,8 +833,7 @@ checksum = "49874b5167b65d7193b8aba1567f5c7d93d001cafc34600cee003eda787e483f"
 [[package]]
 name = "weedle2"
 version = "4.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2e79c5206e1f43a2306fd64bdb95025ee4228960f2e6c5a8b173f3caaf807741"
+source = "git+https://github.com/mozilla/uniffi-rs.git#68296e0ba571ec4a73d38fd22dd54a7dd5ccb046"
 dependencies = [
  "nom",
 ]
