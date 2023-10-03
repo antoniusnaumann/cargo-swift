@@ -7,7 +7,7 @@ edition = "2021"
 
 [lib]
 crate-type = ["cdylib", "staticlib"]
-name = "mylib"
+name = "greeter"
 
 [dependencies]
 uniffi = "0.24.3"
