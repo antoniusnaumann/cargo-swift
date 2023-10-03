@@ -290,7 +290,7 @@ fn generate_bindings_with_output(
         let arch = archs.first();
         let lib_path: Utf8PathBuf = format!("{target}/{arch}/{mode}/{lib_file}").into();
 
-        generate_bindings(&lib_path, &lib_name)
+        generate_bindings(&lib_path, lib_name)
             .map_err(|e| format!("Could not generate UniFFI bindings for udl files due to the following error: \n {e}").into())
     })
 }
