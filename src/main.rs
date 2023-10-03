@@ -1,3 +1,5 @@
+use std::process::{exit, ExitCode};
+
 use cargo_swift::{init, package, Config, LibType, Mode};
 use clap::{Parser, Subcommand};
 
@@ -76,7 +78,7 @@ enum Action {
     },
 }
 
-fn main() {
+fn main() -> ExitCode {
     let Cargo::Swift(args) = Cargo::parse();
     let config = args.clone().into();
 
@@ -106,5 +108,8 @@ fn main() {
         eprintln!("\n");
         eprintln!("Failed due to the following error: ");
         e.print();
+        ExitCode::FAILURE
+    } else {
+        ExitCode::SUCCESS
     }
 }
