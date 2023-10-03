@@ -141,16 +141,18 @@ dependencies = [
 
 [[package]]
 name = "cargo-swift"
-version = "0.5.0-alpha01"
+version = "0.5.0-alpha02"
 dependencies = [
  "anyhow",
  "camino",
+ "cargo_metadata 0.18.0",
  "cargo_toml",
  "clap",
  "convert_case",
  "dialoguer",
  "execute",
  "indicatif",
+ "nonempty",
  "regex",
  "serde",
  "thiserror",
@@ -162,6 +164,20 @@ name = "cargo_metadata"
 version = "0.15.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "eee4243f1f26fc7a42710e7439c149e2b10b05472f88090acce52632f231a73a"
+dependencies = [
+ "camino",
+ "cargo-platform",
+ "semver",
+ "serde",
+ "serde_json",
+ "thiserror",
+]
+
+[[package]]
+name = "cargo_metadata"
+version = "0.18.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fb9ac64500cc83ce4b9f8dafa78186aa008c8dea77a09b94cd307fd0cd5022a8"
 dependencies = [
  "camino",
  "cargo-platform",
@@ -455,6 +471,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "nonempty"
+version = "0.8.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "aeaf4ad7403de93e699c191202f017118df734d3850b01e13a3a8b2e6953d3c9"
+
+[[package]]
 name = "number_prefix"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -740,7 +762,7 @@ dependencies = [
  "anyhow",
  "askama",
  "camino",
- "cargo_metadata",
+ "cargo_metadata 0.15.4",
  "fs-err",
  "glob",
  "goblin",
@@ -786,7 +808,7 @@ checksum = "1048d7c54816dc27ed4041fe952d42c7cb88e711cf3299e36ee70df7692c4a39"
 dependencies = [
  "anyhow",
  "camino",
- "cargo_metadata",
+ "cargo_metadata 0.15.4",
  "fs-err",
  "once_cell",
  "serde",

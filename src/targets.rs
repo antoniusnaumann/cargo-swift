@@ -1,6 +1,7 @@
 use std::{fmt::Display, process::Command};
 
 use execute::command;
+use nonempty::{nonempty, NonEmpty};
 
 use crate::lib_type::LibType;
 
@@ -17,7 +18,7 @@ pub enum Target {
     },
     Universal {
         universal_name: &'static str,
-        architectures: Vec<&'static str>,
+        architectures: NonEmpty<&'static str>,
         display_name: &'static str,
         platform: ApplePlatform,
     },
@@ -112,9 +113,9 @@ impl Target {
     ///
     /// If this target is a single target, the returned vector will always contain exactly one element.
     /// The names returned here exactly match the identifiers of the respective official Rust targets.
-    pub fn architectures(&self) -> Vec<&'static str> {
+    pub fn architectures(&self) -> NonEmpty<&'static str> {
         match self {
-            Target::Single { architecture, .. } => vec![architecture],
+            Target::Single { architecture, .. } => nonempty![architecture],
             Target::Universal { architectures, .. } => architectures.to_owned(),
         }
     }
@@ -188,13 +189,13 @@ impl TargetInfo for ApplePlatform {
             },
             IOSSimulator => Target::Universal {
                 universal_name: "universal-ios",
-                architectures: vec!["x86_64-apple-ios", "aarch64-apple-ios-sim"],
+                architectures: nonempty!["x86_64-apple-ios", "aarch64-apple-ios-sim"],
                 display_name: "iOS Simulator",
                 platform: *self,
             },
             MacOS => Target::Universal {
                 universal_name: "universal-macos",
-                architectures: vec!["x86_64-apple-darwin", "aarch64-apple-darwin"],
+                architectures: nonempty!["x86_64-apple-darwin", "aarch64-apple-darwin"],
                 display_name: "macOS",
                 platform: *self,
             },
@@ -203,7 +204,7 @@ impl TargetInfo for ApplePlatform {
             }
             TvOS => Target::Universal {
                 universal_name: "universal-tvos",
-                architectures: vec!["aarch64-apple-tvos", "x86_64-apple-tvos"],
+                architectures: nonempty!["aarch64-apple-tvos", "x86_64-apple-tvos"],
                 display_name: "tvOS",
                 platform: *self,
             },

@@ -101,11 +101,11 @@ pub fn run(
         build_with_output(target, &lib_name, mode, lib_type, &config)?;
     }
 
-    let namespace = generate_bindings_with_output(&targets, &lib_name, mode, lib_type, &config)?;
+    generate_bindings_with_output(&targets, &lib_name, mode, lib_type, &config)?;
 
     recreate_output_dir(&package_name).expect("Could not create package output directory!");
     create_xcframework_with_output(&targets, &lib_name, &package_name, mode, lib_type, &config)?;
-    create_package_with_output(&package_name, &namespace, &config)?;
+    create_package_with_output(&package_name, &lib_name, &config)?;
 
     Ok(())
 }
@@ -279,15 +279,18 @@ fn generate_bindings_with_output(
     mode: Mode,
     lib_type: LibType,
     config: &Config,
-) -> Result<String> {
+) -> Result<()> {
     run_step(config, "Generating Swift bindings...", || {
         let lib_file = library_file_name(lib_name, lib_type);
         let target = target_dir();
-        let lib_path: Option<Utf8PathBuf> = targets
+        let archs = targets
             .first()
-            .and_then(|t| t.architectures().first().cloned())
-            .map(|arch| format!("{target}/{arch}/{mode}/{lib_file}").into());
-        generate_bindings(lib_path.as_deref())
+            .ok_or("Could not generate UniFFI bindings: No target platform selected!")?
+            .architectures();
+        let arch = archs.first();
+        let lib_path: Utf8PathBuf = format!("{target}/{arch}/{mode}/{lib_file}").into();
+
+        generate_bindings(&lib_path, &lib_name)
             .map_err(|e| format!("Could not generate UniFFI bindings for udl files due to the following error: \n {e}").into())
     })
 }

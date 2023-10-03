@@ -2,13 +2,12 @@ use std::fs::{self, create_dir};
 
 use crate::Result;
 use camino::Utf8Path;
-use regex::Regex;
 use uniffi_bindgen::bindings::TargetLanguage;
 
 use crate::recreate_dir;
 
-pub fn generate_bindings(lib_path: Option<&Utf8Path>) -> Result<String> {
-    let udl_file = Utf8Path::new("./src/lib.udl");
+/// Generates UniFFI bindings for crate and returns the .udl namespace
+pub fn generate_bindings(lib_path: &Utf8Path, crate_name: &str) -> Result<()> {
     let out_dir = Utf8Path::new("./generated");
     let headers = out_dir.join("headers");
     let sources = out_dir.join("sources");
@@ -17,66 +16,25 @@ pub fn generate_bindings(lib_path: Option<&Utf8Path>) -> Result<String> {
     create_dir(&headers)?;
     create_dir(&sources)?;
 
-    uniffi_bindgen::generate_bindings(
-        udl_file,
-        None,
-        vec![TargetLanguage::Swift],
-        Some(out_dir),
+    uniffi_bindgen::library_mode::generate_bindings(
         lib_path,
+        Some(crate_name.to_owned()),
+        &[TargetLanguage::Swift],
+        out_dir,
         false,
     )?;
 
-    let namespace = detect_namespace(udl_file)?;
-
     fs::copy(
-        out_dir.join(format!("{namespace}.swift")),
-        sources.join(format!("{namespace}.swift")),
+        out_dir.join(format!("{crate_name}.swift")),
+        sources.join(format!("{crate_name}.swift")),
     )?;
 
-    let header = format!("{namespace}FFI.h");
+    let header = format!("{crate_name}FFI.h");
     fs::copy(out_dir.join(&header), headers.join(&header))?;
     fs::copy(
-        out_dir.join(format!("{namespace}FFI.modulemap")),
+        out_dir.join(format!("{crate_name}FFI.modulemap")),
         headers.join("module.modulemap"),
     )?;
 
-    Ok(namespace)
-}
-
-fn detect_namespace(udl_file: &Utf8Path) -> Result<String> {
-    let content = fs::read_to_string(udl_file)?;
-
-    extract_namespace(&content)
-}
-
-fn extract_namespace(content: &str) -> Result<String> {
-    let regex = Regex::new(r"namespace\s*([^\{\s]*)\s*\{").unwrap();
-
-    let namespace = regex
-        .captures(content)
-        .and_then(|c| c.get(1))
-        .map(|m| m.as_str().to_string())
-        .ok_or("lib.udl does not contain a namespace!")?;
-
-    Ok(namespace)
-}
-
-#[cfg(test)]
-mod tests {
-    use super::extract_namespace;
-
-    #[test]
-    fn test_extract_namespace_ok() {
-        let content = "namespace math { 
-            u64 add(u64 a, u64 b);
-        };";
-
-        assert_eq!(extract_namespace(content).unwrap(), "math");
-
-        let content = "namespace Example {};";
-        assert_eq!(extract_namespace(content).unwrap(), "Example");
-
-        let content = "namespace      whitespace        {}";
-        assert_eq!(extract_namespace(content).unwrap(), "whitespace");
-    }
+    Ok(())
 }
