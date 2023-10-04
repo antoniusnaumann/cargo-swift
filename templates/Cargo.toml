@@ -1,13 +1,13 @@
 [package]
-name = "<CRATE_NAME>"
+name = "{{ crate_name }}"
 version = "0.1.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [lib]
-crate-type = ["<LIB_TYPE>", "lib"]
-name = "<NAMESPACE>"
+crate-type = ["{{ lib_type }}", "lib"]
+name = "{{ namespace }}"
 
 [dependencies]
 uniffi = "0.24"

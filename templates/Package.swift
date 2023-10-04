@@ -1,26 +1,26 @@
 // swift-tools-version:5.5
 // The swift-tools-version declares the minimum version of Swift required to build this package.
-// Swift Package: <PACKAGE_NAME>
+// Swift Package: {{ package_name }}
 
 import PackageDescription;
 
 let package = Package(
-    name: "<PACKAGE_NAME>",
+    name: "{{ package_name }}",
     platforms: [
         .iOS(.v13),
         .macOS(.v10_10)
     ],
     products: [
         .library(
-            name: "<PACKAGE_NAME>",
-            targets: ["<PACKAGE_NAME>"]
+            name: "{{ package_name }}",
+            targets: ["{{ package_name }}"]
         )
     ],
     dependencies: [ ],
     targets: [
         .binaryTarget(name: "RustFramework", path: "./RustFramework.xcframework"),
         .target(
-            name: "<PACKAGE_NAME>",
+            name: "{{ package_name }}",
             dependencies: [
                 .target(name: "RustFramework")
             ]

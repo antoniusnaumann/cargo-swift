@@ -1,5 +1,5 @@
 // Keep this namespace, even when empty - otherwise binding generation will throw an error!
-namespace <NAMESPACE> {
+namespace {{ namespace }} {
 	// You can safely delete this example top-level function definition
 	u64 add(u64 a, u64 b); 
 };
