@@ -21,6 +21,11 @@ let package = Package(
         .binaryTarget(name: "RustFramework", path: "./RustFramework.xcframework"),
         .target(
             name: "{{ package_name }}",
+            {% if !enable_warnings %}
+            swiftSettings: [
+                .unsafeFlags(["-suppress-warnings"]),
+            ],
+            {%- endif %}
             dependencies: [
                 .target(name: "RustFramework")
             ]

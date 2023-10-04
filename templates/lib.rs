@@ -1,6 +1,6 @@
-// Call this for every uniffi module (.udl) you declare
 uniffi::include_scaffolding!("lib");
 
+{% if !plain %}
 // Bindings have to be exposed in a .udl file with the same name as the corresponding .rs file, i.e. lib.udl
 // You can expose top-level functions...
 pub fn add(a: u64, b: u64) -> u64 {
@@ -39,3 +39,4 @@ pub fn subtract(a: u64, b: u64) -> u64 {
 }
 
 // ... and much more! For more information about bindings, read the UniFFI book: https://mozilla.github.io/uniffi-rs/udl_file_spec.html
+{%- endif %}
