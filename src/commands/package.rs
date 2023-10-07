@@ -7,9 +7,7 @@ use std::process::{Command, Stdio};
 use camino::Utf8PathBuf;
 use cargo_toml::Manifest;
 use clap::ValueEnum;
-use console::Style;
 use convert_case::{Case, Casing};
-use dialoguer::theme::{ColorfulTheme, Theme};
 use dialoguer::{Input, MultiSelect};
 use execute::{command, Execute};
 use indicatif::MultiProgress;
@@ -149,14 +147,6 @@ impl Platform {
     }
 }
 
-// TODO: Move to console package
-fn finished_prompt_theme() -> impl Theme {
-    ColorfulTheme {
-        prompt_style: Style::new().for_stderr(),
-        ..ColorfulTheme::default()
-    }
-}
-
 fn prompt_platforms(accept_all: bool) -> Vec<Platform> {
     let platforms = Platform::all();
     let items: Vec<_> = platforms.iter().map(|p| p.display_name()).collect();
@@ -165,7 +155,7 @@ fn prompt_platforms(accept_all: bool) -> Vec<Platform> {
         return platforms;
     }
 
-    let theme = finished_prompt_theme();
+    let theme = prompt_theme();
     let selector = MultiSelect::with_theme(&theme)
         .items(&items)
         .with_prompt("Select Target Platforms")
@@ -213,7 +203,7 @@ fn prompt_toolchain_installation(toolchains: &[&str]) -> bool {
         println!("\t{toolchain}")
     }
 
-    let theme = finished_prompt_theme();
+    let theme = prompt_theme();
     let answer = Input::with_theme(&theme)
         .with_prompt("Do you want to install them? [Y/n]")
         .default("yes".to_owned())
@@ -261,7 +251,7 @@ fn prompt_package_name(crate_name: &str, accept_all: bool) -> String {
         return default;
     }
 
-    let theme = finished_prompt_theme();
+    let theme = prompt_theme();
     Input::with_theme(&theme)
         .with_prompt("Swift Package Name")
         .default(default)

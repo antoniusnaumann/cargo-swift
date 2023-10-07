@@ -11,6 +11,7 @@ pub(crate) mod console {
     pub mod messages;
     pub mod spinners;
     pub mod step;
+    pub mod theme;
 
     pub use command::*;
     pub use config::*;
@@ -18,6 +19,7 @@ pub(crate) mod console {
     pub use messages::*;
     pub use spinners::*;
     pub use step::*;
+    pub use theme::*;
 }
 
 mod bindings;
