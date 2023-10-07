@@ -148,6 +148,7 @@ dependencies = [
  "cargo_metadata 0.18.0",
  "cargo_toml",
  "clap",
+ "console",
  "convert_case",
  "dialoguer",
  "execute",

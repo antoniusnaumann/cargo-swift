@@ -7,15 +7,15 @@ use super::CommandInfo;
 const TICK_RATE: Duration = Duration::from_millis(30);
 
 fn main_spinner_style() -> ProgressStyle {
-    ProgressStyle::with_template("{spinner:.bold.dim} {wide_msg}").unwrap()
+    ProgressStyle::with_template("{spinner:.bold.dim} {wide_msg:.bold}").unwrap()
 }
 
 fn main_spinner_finish_style() -> ProgressStyle {
-    ProgressStyle::with_template("{prefix:.green} {wide_msg:.bold}").unwrap()
+    ProgressStyle::with_template("{prefix:.green} {wide_msg}").unwrap()
 }
 
 fn main_spinner_fail_style() -> ProgressStyle {
-    ProgressStyle::with_template("{prefix:.red} {wide_msg:.bold}").unwrap()
+    ProgressStyle::with_template("{prefix:.red} {wide_msg}").unwrap()
 }
 
 pub trait Spinner {

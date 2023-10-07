@@ -7,8 +7,9 @@ use std::process::{Command, Stdio};
 use camino::Utf8PathBuf;
 use cargo_toml::Manifest;
 use clap::ValueEnum;
+use console::Style;
 use convert_case::{Case, Casing};
-use dialoguer::theme::ColorfulTheme;
+use dialoguer::theme::{ColorfulTheme, Theme};
 use dialoguer::{Input, MultiSelect};
 use execute::{command, Execute};
 use indicatif::MultiProgress;
@@ -60,19 +61,20 @@ pub fn run(
     let manifest = Manifest::from_slice(&read("./Cargo.toml")?)
         .expect("Could not find Cargo.toml in this directory!");
 
-    let crate_name = manifest.package.unwrap().name.to_lowercase();
-    let package_name =
-        package_name.unwrap_or_else(|| prompt_package_name(&crate_name, config.accept_all));
     let lib = manifest
         .lib
         .ok_or("No library tag defined in Cargo.toml!")?;
-    let lib_name = lib.name.ok_or("No library name found in Cargo.toml!")?;
     let lib_types = lib
         .crate_type
         .iter()
         .filter_map(|t| t.parse().ok())
         .collect::<Vec<_>>();
-    let lib_type = pick_lib_type(&lib_types, lib_type_arg.into())?;
+    let lib_type = pick_lib_type(&lib_types, lib_type_arg.into(), &config)?;
+    let lib_name = lib.name.ok_or("No library name found in Cargo.toml!")?;
+
+    let crate_name = manifest.package.unwrap().name.to_lowercase();
+    let package_name =
+        package_name.unwrap_or_else(|| prompt_package_name(&crate_name, config.accept_all));
 
     let platforms = platforms.unwrap_or_else(|| prompt_platforms(config.accept_all));
 
@@ -147,6 +149,14 @@ impl Platform {
     }
 }
 
+// TODO: Move to console package
+fn finished_prompt_theme() -> impl Theme {
+    ColorfulTheme {
+        prompt_style: Style::new().for_stderr(),
+        ..ColorfulTheme::default()
+    }
+}
+
 fn prompt_platforms(accept_all: bool) -> Vec<Platform> {
     let platforms = Platform::all();
     let items: Vec<_> = platforms.iter().map(|p| p.display_name()).collect();
@@ -155,12 +165,15 @@ fn prompt_platforms(accept_all: bool) -> Vec<Platform> {
         return platforms;
     }
 
-    let chosen: Vec<usize> = MultiSelect::with_theme(&ColorfulTheme::default())
+    let theme = finished_prompt_theme();
+    let selector = MultiSelect::with_theme(&theme)
         .items(&items)
         .with_prompt("Select Target Platforms")
-        .defaults(&[true, true, true, false])
-        .interact()
-        .unwrap();
+        // TODO: Move this to separate class and disable reporting to change style on success
+        // .report(false)
+        .defaults(&[true, true, true, false]);
+
+    let chosen: Vec<usize> = selector.interact().unwrap();
 
     chosen.into_iter().map(|i| platforms[i]).collect()
 }
@@ -200,7 +213,8 @@ fn prompt_toolchain_installation(toolchains: &[&str]) -> bool {
         println!("\t{toolchain}")
     }
 
-    let answer = Input::with_theme(&ColorfulTheme::default())
+    let theme = finished_prompt_theme();
+    let answer = Input::with_theme(&theme)
         .with_prompt("Do you want to install them? [Y/n]")
         .default("yes".to_owned())
         .interact_text()
@@ -247,27 +261,38 @@ fn prompt_package_name(crate_name: &str, accept_all: bool) -> String {
         return default;
     }
 
-    Input::with_theme(&ColorfulTheme::default())
+    let theme = finished_prompt_theme();
+    Input::with_theme(&theme)
         .with_prompt("Swift Package Name")
         .default(default)
         .interact_text()
         .unwrap()
 }
 
-fn pick_lib_type(options: &[LibType], suggested: Option<LibType>) -> Result<LibType> {
-    // TODO: ERROR HANDLING if a non-matching type is given, this should return an error instead of defaulting to automatic
+fn pick_lib_type(
+    options: &[LibType],
+    suggested: Option<LibType>,
+    config: &Config,
+) -> Result<LibType> {
     if let Some(result) = suggested.and_then(|t| options.iter().find(|&&i| t == i)) {
         return Ok(*result);
     }
 
-    if options.iter().any(|i| matches!(&i, LibType::Static)) {
-        return Ok(LibType::Static);
-    }
-
     // TODO: Prompt user if multiple library types are present
-    let first = options.first().ok_or("No supported library type was specified in Cargo.toml! \n\n Supported types are: \n\t- staticlib \n\t- cdylib")?;
+    let choosen = if options.iter().any(|i| matches!(&i, LibType::Static)) {
+        LibType::Static
+    } else {
+        *options.first().ok_or("No supported library type was specified in Cargo.toml! \n\n Supported types are: \n\t- staticlib \n\t- cdylib")?
+    };
 
-    Ok(*first)
+    if let Some(suggested) = suggested {
+        // TODO: Show part of Cargo.toml here to help user fix this
+        warn(
+            &format!("No matching library type for --lib-type {suggested} found in Cargo.toml.\n  Building as {choosen} instead..."),
+            config,
+        )
+    }
+    Ok(choosen)
 }
 
 fn generate_bindings_with_output(
