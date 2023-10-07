@@ -1,25 +1,34 @@
 #![allow(clippy::useless_format)]
 
-mod command;
 mod commands {
     pub mod init;
     pub mod package;
 }
+pub(crate) mod console {
+    mod command;
+    pub mod config;
+    pub mod error;
+    pub mod messages;
+    pub mod spinners;
+    pub mod step;
+
+    pub use command::*;
+    pub use config::*;
+    pub use error::*;
+    pub use messages::*;
+    pub use spinners::*;
+    pub use step::*;
+}
 
 mod bindings;
-mod config;
-mod error;
 mod lib_type;
-mod spinners;
-mod step;
 mod swiftpackage;
 mod targets;
 mod xcframework;
 
-pub use command::*;
 pub use commands::*;
-pub use config::*;
-pub use error::*;
+pub use console::error::Result;
+pub use console::Config;
 pub use lib_type::LibType;
 pub use targets::*;
 

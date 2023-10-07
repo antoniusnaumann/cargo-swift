@@ -14,14 +14,12 @@ use execute::{command, Execute};
 use indicatif::MultiProgress;
 
 use crate::bindings::generate_bindings;
-use crate::error::*;
+use crate::console::*;
+use crate::console::{run_step, run_step_with_commands};
 use crate::lib_type::LibType;
-use crate::spinners::*;
-use crate::step::{run_step, run_step_with_commands};
 use crate::swiftpackage::{create_swiftpackage, recreate_output_dir};
 use crate::targets::*;
 use crate::xcframework::create_xcframework;
-use crate::*;
 
 #[derive(ValueEnum, Debug, Clone)]
 #[value()]
@@ -262,9 +260,8 @@ fn pick_lib_type(options: &[LibType], suggested: Option<LibType>) -> Result<LibT
         return Ok(*result);
     }
 
-    // TODO: Remove on next breaking version bump, this is only here to not induce a breaking change in the tools behavior
-    if options.iter().any(|i| matches!(&i, LibType::Dynamic)) {
-        return Ok(LibType::Dynamic);
+    if options.iter().any(|i| matches!(&i, LibType::Static)) {
+        return Ok(LibType::Static);
     }
 
     // TODO: Prompt user if multiple library types are present

@@ -5,10 +5,8 @@ use std::process::Stdio;
 use clap::ValueEnum;
 use execute::{command, Execute};
 
-use crate::config::Config;
-use crate::error::Result;
+use crate::console::{run_step, Config, Result};
 use crate::lib_type::LibType;
-use crate::step::run_step;
 
 #[derive(ValueEnum, Debug, Clone)]
 #[value()]

@@ -3,8 +3,9 @@ use std::process::{Command, Stdio};
 
 use indicatif::MultiProgress;
 
-use crate::spinners::{CommandSpinner, MainSpinner, OptionalMultiProgress, Ticking};
-use crate::{CommandInfo, Config, Result};
+use super::{
+    CommandInfo, CommandSpinner, Config, MainSpinner, OptionalMultiProgress, Result, Ticking,
+};
 
 pub fn run_step<T, E, S>(config: &Config, title: S, execute: E) -> Result<T>
 where
