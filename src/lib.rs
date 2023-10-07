@@ -26,6 +26,7 @@ mod bindings;
 mod lib_type;
 mod swiftpackage;
 mod targets;
+mod templating;
 mod xcframework;
 
 pub use commands::*;
