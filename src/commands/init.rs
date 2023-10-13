@@ -1,7 +1,7 @@
+use askama::Template;
 use std::fmt::Display;
 use std::fs::{create_dir, write};
 use std::process::Stdio;
-use askama::Template;
 
 use clap::ValueEnum;
 use execute::{command, Execute};
@@ -55,14 +55,17 @@ fn create_project(crate_name: &str, lib_type: LibType, plain: bool) -> Result<()
         lib_type: lib_type.identifier(),
     };
     let lib_rs_content = templating::LibRs { plain };
-    let udl_content = templating::LibUdl { namespace: &namespace, plain };
-    let build_rs_content = templating::BuildRs { plain };
+    let udl_content = templating::LibUdl {
+        namespace: &namespace,
+        plain,
+    };
+    let build_rs_content = templating::BuildRs {};
 
     write_project_files(
-        &cargo_toml_content.render()?,
-        &build_rs_content.render()?,
-        &lib_rs_content.render()?,
-        &udl_content.render()?,
+        &cargo_toml_content.render().unwrap(),
+        &build_rs_content.render().unwrap(),
+        &lib_rs_content.render().unwrap(),
+        &udl_content.render().unwrap(),
         crate_name,
     )?;
 

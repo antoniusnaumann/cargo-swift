@@ -1,7 +1,5 @@
 use askama::Template;
 
-use crate::LibType;
-
 #[derive(Template)]
 #[template(path = "Cargo.toml", escape = "none")]
 pub(crate) struct CargoToml<'a> {
@@ -13,9 +11,7 @@ pub(crate) struct CargoToml<'a> {
 
 #[derive(Template)]
 #[template(path = "build.rs", escape = "none")]
-pub(crate) struct BuildRs {
-    pub(crate) plain: bool,
-}
+pub(crate) struct BuildRs {}
 
 #[derive(Template)]
 #[template(path = "lib.rs", escape = "none")]
@@ -36,3 +32,4 @@ pub(crate) struct PackageSwift<'a> {
     pub(crate) package_name: &'a str,
     pub(crate) enable_warnings: bool,
 }
+

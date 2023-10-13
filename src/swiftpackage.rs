@@ -1,6 +1,7 @@
+use askama::Template;
 use std::fs::{copy, create_dir_all, write};
 
-use crate::{recreate_dir, Result};
+use crate::{recreate_dir, templating, Result};
 
 /// Create artifacts for a swift package given the package name
 ///
@@ -8,11 +9,16 @@ use crate::{recreate_dir, Result};
 pub fn create_swiftpackage(package_name: &str, namespace: &str) -> Result<()> {
     // TODO: Instead of assuming the directory and the xcframework, let this manage directory
     //  recreation and let it copy the xcframework
-    let package_manifest =
-        include_str!("../template/template.Package.swift").replace("<PACKAGE_NAME>", package_name);
+    let package_manifest = templating::PackageSwift {
+        package_name,
+        enable_warnings: false,
+    };
 
-    write(format!("{}/Package.swift", package_name), package_manifest)
-        .map_err(|e| format!("Could not write Package.swift: \n {e}"))?;
+    write(
+        format!("{}/Package.swift", package_name),
+        package_manifest.render().unwrap(),
+    )
+    .map_err(|e| format!("Could not write Package.swift: \n {e}"))?;
 
     create_dir_all(format!("{}/Sources/{}", package_name, package_name))
         .map_err(|e| format!("Could not create module sources directory: \n {e}"))?;
