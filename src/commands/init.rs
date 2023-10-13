@@ -1,12 +1,14 @@
 use std::fmt::Display;
 use std::fs::{create_dir, write};
 use std::process::Stdio;
+use askama::Template;
 
 use clap::ValueEnum;
 use execute::{command, Execute};
 
 use crate::console::{run_step, Config, Result};
 use crate::lib_type::LibType;
+use crate::templating;
 
 #[derive(ValueEnum, Debug, Clone)]
 #[value()]
@@ -47,28 +49,20 @@ fn create_project(crate_name: &str, lib_type: LibType, plain: bool) -> Result<()
     // let manifest = Manifest::from_str(include_str!("../../Cargo.toml")).unwrap();
     // let cargo_swift_version = manifest.package().version();
     let namespace = crate_name.replace('-', "_");
-    let cargo_toml_content = include_str!("../../template/template.Cargo.toml")
-        .replace("<CRATE_NAME>", crate_name)
-        .replace("<NAMESPACE>", &namespace)
-        .replace("<LIB_TYPE>", lib_type.identifier());
-    let (lib_rs_content, udl_content) = if plain {
-        (
-            include_str!("../../template/template.plain.rs"),
-            include_str!("../../template/template.plain.udl").replace("<NAMESPACE>", &namespace),
-        )
-    } else {
-        (
-            include_str!("../../template/template.lib.rs"),
-            include_str!("../../template/template.lib.udl").replace("<NAMESPACE>", &namespace),
-        )
+    let cargo_toml_content = templating::CargoToml {
+        crate_name,
+        namespace: &namespace,
+        lib_type: lib_type.identifier(),
     };
-    let build_rs_content = include_str!("../../template/template.build.rs");
+    let lib_rs_content = templating::LibRs { plain };
+    let udl_content = templating::LibUdl { namespace: &namespace, plain };
+    let build_rs_content = templating::BuildRs { plain };
 
     write_project_files(
-        &cargo_toml_content,
-        build_rs_content,
-        lib_rs_content,
-        &udl_content,
+        &cargo_toml_content.render()?,
+        &build_rs_content.render()?,
+        &lib_rs_content.render()?,
+        &udl_content.render()?,
         crate_name,
     )?;
 
@@ -98,7 +92,7 @@ fn write_project_files(
 }
 
 fn init_git_repository(crate_name: &str, config: &Config) -> Result<()> {
-    let gitignore_content = include_str!("../../template/template.gitignore");
+    let gitignore_content = include_str!("../../templates/template.gitignore");
     write(format!("{}/.gitignore", crate_name), gitignore_content)
         .map_err(|_| "Could not write .gitignore!")?;
 
