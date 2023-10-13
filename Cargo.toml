@@ -24,7 +24,6 @@ clap = { version = "4.4.6", features = ["derive"] }
 convert_case = "0.6.0"
 nonempty = "0.8.1"
 serde = { version = "1.0.188", features = ["derive"] }
-regex = "1.9.6"
 
 # Templating
 askama = "0.12.1"
