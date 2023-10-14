@@ -1,7 +1,10 @@
 use std::{fmt::Display, process::Command};
+use camino::{Utf8Path, Utf8PathBuf};
+use cargo_metadata::MetadataCommand;
 
 use execute::command;
 use nonempty::{nonempty, NonEmpty};
+use lazy_static::lazy_static;
 
 use crate::lib_type::LibType;
 
@@ -48,11 +51,9 @@ impl Target {
 
         self.architectures()
             .into_iter()
-            // TODO: Setting `--target-dir` is a quick fix to make cargo swift package work for crates that
-            //     are contained in a workspace as described in issue #24, remove this once #7 is implemented
             .map(|arch| {
                 command(format!(
-                    "cargo build --target {arch} {flag} --target-dir ./target"
+                    "cargo build --target {arch} {flag}"
                 ))
             })
             .collect()
@@ -161,8 +162,26 @@ pub fn library_file_name(lib_name: &str, lib_type: LibType) -> String {
     format!("lib{}.{}", lib_name, lib_type.file_extension())
 }
 
-pub fn target_dir() -> &'static str {
-    "./target"
+pub fn target_dir() -> &'static Utf8Path {
+    lazy_static! {
+        static ref TARGET_DIR: Utf8PathBuf = MetadataCommand::new()
+            .no_deps()
+            .other_options(["--offline".to_string()])
+            .exec()
+            // TODO: Error handling
+            .unwrap()
+            .target_directory;
+    }
+
+    let relative = TARGET_DIR
+        // TODO: Error handling
+        .strip_prefix(std::env::current_dir().unwrap())
+        .ok();
+
+    match relative {
+        Some(dir) => dir,
+        None => &TARGET_DIR,
+    }
 }
 
 #[derive(Clone, Copy, Debug)]
