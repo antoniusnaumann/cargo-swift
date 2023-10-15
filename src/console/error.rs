@@ -1,10 +1,22 @@
 use std::fmt::Display;
 use std::io::{self, stderr, Write};
+use std::ops::Deref;
+
+use itertools::Itertools;
 
 #[derive(Debug)]
 enum ErrorMessage {
     Simple(String),
     Stderr(Vec<u8>),
+}
+
+impl ErrorMessage {
+    fn into_bytes(self) -> Vec<u8> {
+        match self {
+            ErrorMessage::Simple(msg) => msg.into_bytes(),
+            ErrorMessage::Stderr(buf) => buf,
+        }
+    }
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -41,6 +53,54 @@ impl From<anyhow::Error> for Error {
 impl From<io::Error> for Error {
     fn from(value: io::Error) -> Self {
         Self::new(value.to_string())
+    }
+}
+
+pub(crate) struct Errors(Vec<Error>);
+
+impl Deref for Errors {
+    type Target = Vec<Error>;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl From<Vec<Error>> for Errors {
+    fn from(value: Vec<Error>) -> Self {
+        Self(value)
+    }
+}
+
+impl FromIterator<Error> for Errors {
+    fn from_iter<T: IntoIterator<Item = Error>>(iter: T) -> Self {
+        iter.into_iter().collect::<Vec<_>>().into()
+    }
+}
+
+impl IntoIterator for Errors {
+    type Item = Error;
+    type IntoIter = std::vec::IntoIter<Self::Item>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.into_iter()
+    }
+}
+
+impl From<Errors> for Result<()> {
+    fn from(value: Errors) -> Self {
+        if value.is_empty() {
+            Ok(())
+        } else {
+            let message = ErrorMessage::Stderr(
+                value
+                    .into_iter()
+                    .map(|e| e.message)
+                    .map(ErrorMessage::into_bytes)
+                    .concat(),
+            );
+
+            Err(Error { message })
+        }
     }
 }
 

@@ -1,11 +1,10 @@
 use std::fmt::Display;
-use std::fs::read;
 use std::ops::Not;
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
 
 use camino::Utf8PathBuf;
-use cargo_toml::Manifest;
+use cargo_metadata::Package;
 use clap::ValueEnum;
 use convert_case::{Case, Casing};
 use dialoguer::{Input, MultiSelect};
@@ -16,6 +15,7 @@ use crate::bindings::generate_bindings;
 use crate::console::*;
 use crate::console::{run_step, run_step_with_commands};
 use crate::lib_type::LibType;
+use crate::metadata::{metadata, MetadataExt};
 use crate::swiftpackage::{create_swiftpackage, recreate_output_dir};
 use crate::targets::*;
 use crate::xcframework::create_xcframework;
@@ -56,21 +56,60 @@ pub fn run(
     lib_type_arg: LibTypeArg,
 ) -> Result<()> {
     // TODO: Allow path as optional argument to take other directories than current directory
-    let manifest = Manifest::from_slice(&read("./Cargo.toml")?)
-        .expect("Could not find Cargo.toml in this directory!");
+    let crates = metadata().uniffi_crates();
 
-    let lib = manifest
-        .lib
+    if crates.len() == 1 {
+        return run_for_crate(
+            crates[0],
+            platforms.clone(),
+            package_name,
+            &config,
+            mode,
+            lib_type_arg,
+        );
+    } else if package_name.is_some() {
+        Err("Package name can only be specified when building a single crate!")?;
+    }
+
+    crates
+        .iter()
+        .map(|current_crate| {
+            info!(&config, "Packaging crate {}", current_crate.name);
+            run_for_crate(
+                current_crate,
+                platforms.clone(),
+                None,
+                &config,
+                mode,
+                lib_type_arg.clone(),
+            )
+        })
+        .filter_map(|result| result.err())
+        .collect::<Errors>()
+        .into()
+}
+
+fn run_for_crate(
+    current_crate: &Package,
+    platforms: Option<Vec<Platform>>,
+    package_name: Option<String>,
+    config: &Config,
+    mode: Mode,
+    lib_type_arg: LibTypeArg,
+) -> Result<()> {
+    let lib = current_crate
+        .targets
+        .iter()
+        .find(|t| t.kind.contains(&"lib".to_owned()))
         .ok_or("No library tag defined in Cargo.toml!")?;
     let lib_types = lib
-        .crate_type
+        .crate_types
         .iter()
         .filter_map(|t| t.parse().ok())
         .collect::<Vec<_>>();
-    let lib_type = pick_lib_type(&lib_types, lib_type_arg.into(), &config)?;
-    let lib_name = lib.name.ok_or("No library name found in Cargo.toml!")?;
+    let lib_type = pick_lib_type(&lib_types, lib_type_arg.clone().into(), config)?;
 
-    let crate_name = manifest.package.unwrap().name.to_lowercase();
+    let crate_name = current_crate.name.to_lowercase();
     let package_name =
         package_name.unwrap_or_else(|| prompt_package_name(&crate_name, config.accept_all));
 
@@ -96,14 +135,14 @@ pub fn run(
     }
 
     for target in &targets {
-        build_with_output(target, &lib_name, mode, lib_type, &config)?;
+        build_with_output(target, &lib.name, mode, lib_type, config)?;
     }
 
-    generate_bindings_with_output(&targets, &lib_name, mode, lib_type, &config)?;
+    generate_bindings_with_output(&targets, &lib.name, mode, lib_type, config)?;
 
     recreate_output_dir(&package_name).expect("Could not create package output directory!");
-    create_xcframework_with_output(&targets, &lib_name, &package_name, mode, lib_type, &config)?;
-    create_package_with_output(&package_name, &lib_name, &config)?;
+    create_xcframework_with_output(&targets, &lib.name, &package_name, mode, lib_type, config)?;
+    create_package_with_output(&package_name, &lib.name, config)?;
 
     Ok(())
 }
@@ -277,10 +316,8 @@ fn pick_lib_type(
 
     if let Some(suggested) = suggested {
         // TODO: Show part of Cargo.toml here to help user fix this
-        warn(
-            &format!("No matching library type for --lib-type {suggested} found in Cargo.toml.\n  Building as {choosen} instead..."),
-            config,
-        )
+        warning!(config,
+            "No matching library type for --lib-type {suggested} found in Cargo.toml.\n  Building as {choosen} instead...")
     }
     Ok(choosen)
 }
@@ -294,7 +331,7 @@ fn generate_bindings_with_output(
 ) -> Result<()> {
     run_step(config, "Generating Swift bindings...", || {
         let lib_file = library_file_name(lib_name, lib_type);
-        let target = target_dir();
+        let target = metadata().target_dir();
         let archs = targets
             .first()
             .ok_or("Could not generate UniFFI bindings: No target platform selected!")?

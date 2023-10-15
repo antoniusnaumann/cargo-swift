@@ -1,12 +1,10 @@
 use std::{fmt::Display, process::Command};
-use camino::{Utf8Path, Utf8PathBuf};
-use cargo_metadata::MetadataCommand;
 
 use execute::command;
 use nonempty::{nonempty, NonEmpty};
-use lazy_static::lazy_static;
 
 use crate::lib_type::LibType;
+use crate::metadata::{metadata, MetadataExt};
 
 pub trait TargetInfo {
     fn target(&self) -> Target;
@@ -51,11 +49,7 @@ impl Target {
 
         self.architectures()
             .into_iter()
-            .map(|arch| {
-                command(format!(
-                    "cargo build --target {arch} {flag}"
-                ))
-            })
+            .map(|arch| command(format!("cargo build --target {arch} {flag}")))
             .collect()
     }
 
@@ -65,7 +59,7 @@ impl Target {
             Target::Universal { architectures, .. } => {
                 let path = self.library_directory(mode);
 
-                let target = target_dir();
+                let target = metadata().target_dir();
                 let target_name = library_file_name(lib_name, lib_type);
                 let component_paths: Vec<_> = architectures
                     .iter()
@@ -141,7 +135,7 @@ impl Target {
             Mode::Release => "release",
         };
 
-        let target = target_dir();
+        let target = metadata().target_dir();
 
         match self {
             Target::Single { architecture, .. } => format!("{target}/{architecture}/{mode}"),
@@ -160,28 +154,6 @@ impl Target {
 
 pub fn library_file_name(lib_name: &str, lib_type: LibType) -> String {
     format!("lib{}.{}", lib_name, lib_type.file_extension())
-}
-
-pub fn target_dir() -> &'static Utf8Path {
-    lazy_static! {
-        static ref TARGET_DIR: Utf8PathBuf = MetadataCommand::new()
-            .no_deps()
-            .other_options(["--offline".to_string()])
-            .exec()
-            // TODO: Error handling
-            .unwrap()
-            .target_directory;
-    }
-
-    let relative = TARGET_DIR
-        // TODO: Error handling
-        .strip_prefix(std::env::current_dir().unwrap())
-        .ok();
-
-    match relative {
-        Some(dir) => dir,
-        None => &TARGET_DIR,
-    }
 }
 
 #[derive(Clone, Copy, Debug)]
