@@ -25,6 +25,7 @@ pub(crate) mod console {
 mod bindings;
 mod lib_type;
 mod metadata;
+mod path;
 mod swiftpackage;
 mod targets;
 mod templating;

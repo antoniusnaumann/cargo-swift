@@ -1,6 +1,10 @@
+use std::borrow::Cow;
+
 use camino::Utf8Path;
 use cargo_metadata::{Metadata, MetadataCommand, Package};
 use lazy_static::lazy_static;
+
+use crate::path::PathExt;
 
 pub(crate) fn metadata() -> &'static Metadata {
     lazy_static! {
@@ -16,21 +20,18 @@ pub(crate) fn metadata() -> &'static Metadata {
 }
 
 pub(crate) trait MetadataExt {
-    fn target_dir(&self) -> &Utf8Path;
+    fn target_dir(&self) -> Cow<Utf8Path>;
     fn uniffi_crates(&self) -> Vec<&Package>;
 }
 
 impl MetadataExt for Metadata {
-    fn target_dir(&self) -> &Utf8Path {
+    fn target_dir(&self) -> Cow<Utf8Path> {
         let target_dir = self.target_directory.as_path();
-        let relative = target_dir
-            // TODO: Error handling
-            .strip_prefix(std::env::current_dir().unwrap())
-            .ok();
+        let relative = target_dir.to_relative();
 
         match relative {
-            Some(dir) => dir,
-            None => target_dir,
+            Ok(relative) => Cow::from(relative),
+            Err(_) => Cow::from(target_dir),
         }
     }
 
