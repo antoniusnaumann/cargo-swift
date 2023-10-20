@@ -1,7 +1,7 @@
 {% if macro_only %}
 uniffi::setup_scaffolding!();
 {% else %}
-uniffi::include_scaffolding!("{{ namespace }}");
+uniffi::include_scaffolding!("lib");
 {%- endif %}
 
 {% if !plain %}

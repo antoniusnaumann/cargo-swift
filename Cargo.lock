@@ -698,9 +698,9 @@ checksum = "e51733f11c9c4f72aa0c160008246859e340b00807569a0da0e7a1079b27ba85"
 
 [[package]]
 name = "uniffi_bindgen"
-version = "0.24.3"
+version = "0.25.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c2f91fdcd44de3aab35847bf80485f412879dcdd92b5140ee67f948e5eed750e"
+checksum = "6fb3dfb794733803cdfeff4c09cb4e2bcecb91df6928343a18c8ee679a5772a4"
 dependencies = [
  "anyhow",
  "askama",
@@ -713,18 +713,17 @@ dependencies = [
  "once_cell",
  "paste",
  "serde",
- "serde_json",
  "toml",
  "uniffi_meta",
  "uniffi_testing",
- "weedle2",
+ "uniffi_udl",
 ]
 
 [[package]]
 name = "uniffi_checksum_derive"
-version = "0.24.3"
+version = "0.25.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d1b354a9bd654cc6547d461ccd60a10eb6c7473178f12d8ff91cf4340ae947e8"
+checksum = "819bd46e5afff09738fbd493e58c26dca0b38bca8f206ffc9a7bc2dfd7e1c11d"
 dependencies = [
  "quote",
  "syn",
@@ -732,30 +731,39 @@ dependencies = [
 
 [[package]]
 name = "uniffi_meta"
-version = "0.24.3"
+version = "0.25.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f815bba89a6585954c089c53a775d166c0334c907be0e462bf0f0ac0494656e7"
+checksum = "3dc021ae8f8c12f69022f1502537687df59045e1c16f5d1eafdb657ecdb7cdf1"
 dependencies = [
  "anyhow",
  "bytes",
- "serde",
  "siphasher",
  "uniffi_checksum_derive",
 ]
 
 [[package]]
 name = "uniffi_testing"
-version = "0.24.3"
+version = "0.25.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1048d7c54816dc27ed4041fe952d42c7cb88e711cf3299e36ee70df7692c4a39"
+checksum = "40fe383aca04dfbdf6a5039a9e76bb21ebb13e03e38cf1459f17c62eedee7b6c"
 dependencies = [
  "anyhow",
  "camino",
  "cargo_metadata 0.15.4",
  "fs-err",
  "once_cell",
- "serde",
- "serde_json",
+]
+
+[[package]]
+name = "uniffi_udl"
+version = "0.25.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6040dd1410fcb1a2795ef426f698107c12e295cc11e44a2b040934f786a35d82"
+dependencies = [
+ "anyhow",
+ "uniffi_meta",
+ "uniffi_testing",
+ "weedle2",
 ]
 
 [[package]]

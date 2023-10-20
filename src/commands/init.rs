@@ -61,20 +61,14 @@ fn create_project(
         lib_type: lib_type.identifier(),
         macro_only,
     };
-    let lib_rs_content = templating::LibRs {
-        plain,
-        namespace: &namespace,
-        macro_only,
-    };
+    let lib_rs_content = templating::LibRs { plain, macro_only };
     let (udl_content, build_rs_content) = if !macro_only {
         (
             Some(templating::LibUdl {
                 namespace: &namespace,
                 plain,
             }),
-            Some(templating::BuildRs {
-                namespace: &namespace,
-            }),
+            Some(templating::BuildRs {}),
         )
     } else {
         (None, None)
@@ -86,7 +80,6 @@ fn create_project(
         lib_rs_content,
         udl_content,
         crate_name,
-        &namespace,
     )?;
 
     Ok(())
@@ -98,7 +91,6 @@ fn write_project_files(
     lib_rs: templating::LibRs,
     lib_udl: Option<templating::LibUdl>,
     crate_name: &str,
-    namespace: &str,
 ) -> Result<()> {
     create_dir(crate_name).map_err(|_| "Could not create directory for crate!")?;
 
@@ -125,7 +117,7 @@ fn write_project_files(
 
     if let Some(lib_udl) = lib_udl {
         write(
-            format!("{}/src/{}.udl", crate_name, namespace),
+            format!("{}/src/lib.udl", crate_name),
             lib_udl.render().unwrap(),
         )
         .map_err(|_| "Could not write src/lib.udl!")?;

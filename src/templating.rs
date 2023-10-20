@@ -12,14 +12,11 @@ pub(crate) struct CargoToml<'a> {
 
 #[derive(Template)]
 #[template(path = "build.rs", escape = "none")]
-pub(crate) struct BuildRs<'a> {
-    pub(crate) namespace: &'a str,
-}
+pub(crate) struct BuildRs {}
 
 #[derive(Template)]
 #[template(path = "lib.rs", escape = "none")]
-pub(crate) struct LibRs<'a> {
-    pub(crate) namespace: &'a str,
+pub(crate) struct LibRs {
     pub(crate) plain: bool,
     pub(crate) macro_only: bool,
 }
