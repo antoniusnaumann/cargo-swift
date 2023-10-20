@@ -1,7 +1,7 @@
 use askama::Template;
 
 #[derive(Template)]
-#[template(path = "Cargo.toml", escape = "none")]
+#[template(path = "template.toml", escape = "none")]
 pub(crate) struct CargoToml<'a> {
     pub(crate) crate_name: &'a str,
     pub(crate) namespace: &'a str,
