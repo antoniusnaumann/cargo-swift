@@ -34,7 +34,7 @@ execute = "0.2.12"
 indicatif = "0.17.7"
 
 # FFI Bindings
-uniffi_bindgen = { version = "0.24.3" }
+uniffi_bindgen = { version = "0.25.0" }
 # Allow testing with the latest dev version of UniFFI
 # uniffi_bindgen = {  version = "0.24.3",  git = "https://github.com/mozilla/uniffi-rs.git" }
 
