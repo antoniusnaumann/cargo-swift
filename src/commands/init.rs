@@ -54,12 +54,17 @@ fn create_project(crate_name: &str, lib_type: LibType, plain: bool) -> Result<()
         namespace: &namespace,
         lib_type: lib_type.identifier(),
     };
-    let lib_rs_content = templating::LibRs { plain };
+    let lib_rs_content = templating::LibRs {
+        plain,
+        namespace: &namespace,
+    };
     let udl_content = templating::LibUdl {
         namespace: &namespace,
         plain,
     };
-    let build_rs_content = templating::BuildRs {};
+    let build_rs_content = templating::BuildRs {
+        namespace: &namespace,
+    };
 
     write_project_files(
         &cargo_toml_content.render().unwrap(),
@@ -67,6 +72,7 @@ fn create_project(crate_name: &str, lib_type: LibType, plain: bool) -> Result<()
         &lib_rs_content.render().unwrap(),
         &udl_content.render().unwrap(),
         crate_name,
+        &namespace,
     )?;
 
     Ok(())
@@ -78,6 +84,7 @@ fn write_project_files(
     lib_rs: &str,
     lib_udl: &str,
     crate_name: &str,
+    namespace: &str,
 ) -> Result<()> {
     create_dir(crate_name).map_err(|_| "Could not create directory for crate!")?;
 
@@ -88,7 +95,7 @@ fn write_project_files(
     create_dir(format!("{}/src", crate_name)).expect("Could not create src/ directory!");
     write(format!("{}/src/lib.rs", crate_name), lib_rs)
         .map_err(|_| "Could not write src/lib.rs!")?;
-    write(format!("{}/src/lib.udl", crate_name), lib_udl)
+    write(format!("{}/src/{}.udl", crate_name, namespace), lib_udl)
         .map_err(|_| "Could not write src/lib.udl!")?;
 
     Ok(())

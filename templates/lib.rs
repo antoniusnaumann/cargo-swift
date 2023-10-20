@@ -1,4 +1,4 @@
-uniffi::include_scaffolding!("lib");
+uniffi::include_scaffolding!("{{ namespace }}");
 
 {% if !plain %}
 // Bindings have to be exposed in a .udl file with the same name as the corresponding .rs file, i.e. lib.udl

@@ -11,11 +11,14 @@ pub(crate) struct CargoToml<'a> {
 
 #[derive(Template)]
 #[template(path = "build.rs", escape = "none")]
-pub(crate) struct BuildRs {}
+pub(crate) struct BuildRs<'a> {
+    pub(crate) namespace: &'a str,
+}
 
 #[derive(Template)]
 #[template(path = "lib.rs", escape = "none")]
-pub(crate) struct LibRs {
+pub(crate) struct LibRs<'a> {
+    pub(crate) namespace: &'a str,
     pub(crate) plain: bool,
 }
 
@@ -32,4 +35,3 @@ pub(crate) struct PackageSwift<'a> {
     pub(crate) package_name: &'a str,
     pub(crate) enable_warnings: bool,
 }
-
