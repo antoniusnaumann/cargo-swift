@@ -1,4 +1,4 @@
-uniffi::include_scaffolding!("lib");
+uniffi::setup_scaffolding!();
 
 #[uniffi::export]
 pub fn greet(name: String) -> String {

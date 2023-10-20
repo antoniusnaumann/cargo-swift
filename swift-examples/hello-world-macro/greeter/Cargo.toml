@@ -11,6 +11,3 @@ name = "greeter"
 
 [dependencies]
 uniffi = "0.25"
-
-[build-dependencies]
-uniffi = { version = "0.25", features = ["build"] }
