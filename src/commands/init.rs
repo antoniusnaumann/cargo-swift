@@ -32,9 +32,10 @@ pub fn run(
     vcs: Vcs,
     lib_type: LibType,
     plain: bool,
+    macro_only: bool,
 ) -> Result<()> {
     run_step(&config, "Creating Rust library package...", || {
-        create_project(&crate_name, lib_type, plain)
+        create_project(&crate_name, lib_type, plain, macro_only)
     })?;
 
     match vcs {
@@ -45,7 +46,12 @@ pub fn run(
     Ok(())
 }
 
-fn create_project(crate_name: &str, lib_type: LibType, plain: bool) -> Result<()> {
+fn create_project(
+    crate_name: &str,
+    lib_type: LibType,
+    plain: bool,
+    macro_only: bool,
+) -> Result<()> {
     // let manifest = Manifest::from_str(include_str!("../../Cargo.toml")).unwrap();
     // let cargo_swift_version = manifest.package().version();
     let namespace = crate_name.replace('-', "_");
@@ -53,24 +59,32 @@ fn create_project(crate_name: &str, lib_type: LibType, plain: bool) -> Result<()
         crate_name,
         namespace: &namespace,
         lib_type: lib_type.identifier(),
+        macro_only,
     };
     let lib_rs_content = templating::LibRs {
         plain,
         namespace: &namespace,
+        macro_only,
     };
-    let udl_content = templating::LibUdl {
-        namespace: &namespace,
-        plain,
-    };
-    let build_rs_content = templating::BuildRs {
-        namespace: &namespace,
+    let (udl_content, build_rs_content) = if !macro_only {
+        (
+            Some(templating::LibUdl {
+                namespace: &namespace,
+                plain,
+            }),
+            Some(templating::BuildRs {
+                namespace: &namespace,
+            }),
+        )
+    } else {
+        (None, None)
     };
 
     write_project_files(
-        &cargo_toml_content.render().unwrap(),
-        &build_rs_content.render().unwrap(),
-        &lib_rs_content.render().unwrap(),
-        &udl_content.render().unwrap(),
+        cargo_toml_content,
+        build_rs_content,
+        lib_rs_content,
+        udl_content,
         crate_name,
         &namespace,
     )?;
@@ -79,24 +93,43 @@ fn create_project(crate_name: &str, lib_type: LibType, plain: bool) -> Result<()
 }
 
 fn write_project_files(
-    cargo_toml: &str,
-    build_rs: &str,
-    lib_rs: &str,
-    lib_udl: &str,
+    cargo_toml: templating::CargoToml,
+    build_rs: Option<templating::BuildRs>,
+    lib_rs: templating::LibRs,
+    lib_udl: Option<templating::LibUdl>,
     crate_name: &str,
     namespace: &str,
 ) -> Result<()> {
     create_dir(crate_name).map_err(|_| "Could not create directory for crate!")?;
 
-    write(format!("{}/Cargo.toml", crate_name), cargo_toml)
-        .map_err(|_| "Could not write Cargo.toml!")?;
-    write(format!("{}/build.rs", crate_name), build_rs).expect("Could not write build.rs!");
+    write(
+        format!("{}/Cargo.toml", crate_name),
+        cargo_toml.render().unwrap(),
+    )
+    .map_err(|_| "Could not write Cargo.toml!")?;
+
+    if let Some(build_rs) = build_rs {
+        write(
+            format!("{}/build.rs", crate_name),
+            build_rs.render().unwrap(),
+        )
+        .expect("Could not write build.rs!");
+    }
 
     create_dir(format!("{}/src", crate_name)).expect("Could not create src/ directory!");
-    write(format!("{}/src/lib.rs", crate_name), lib_rs)
-        .map_err(|_| "Could not write src/lib.rs!")?;
-    write(format!("{}/src/{}.udl", crate_name, namespace), lib_udl)
+    write(
+        format!("{}/src/lib.rs", crate_name),
+        lib_rs.render().unwrap(),
+    )
+    .map_err(|_| "Could not write src/lib.rs!")?;
+
+    if let Some(lib_udl) = lib_udl {
+        write(
+            format!("{}/src/{}.udl", crate_name, namespace),
+            lib_udl.render().unwrap(),
+        )
         .map_err(|_| "Could not write src/lib.udl!")?;
+    }
 
     Ok(())
 }

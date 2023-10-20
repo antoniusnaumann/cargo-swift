@@ -7,6 +7,7 @@ pub(crate) struct CargoToml<'a> {
     pub(crate) namespace: &'a str,
     // TODO: Use LibType::identifier here
     pub(crate) lib_type: &'a str,
+    pub(crate) macro_only: bool,
 }
 
 #[derive(Template)]
@@ -20,6 +21,7 @@ pub(crate) struct BuildRs<'a> {
 pub(crate) struct LibRs<'a> {
     pub(crate) namespace: &'a str,
     pub(crate) plain: bool,
+    pub(crate) macro_only: bool,
 }
 
 #[derive(Template)]

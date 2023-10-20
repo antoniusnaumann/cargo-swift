@@ -23,7 +23,7 @@ struct Args {
     #[arg(short = 'y', long, global = true)]
     /// Accept all default selections from all interactive prompts.
     ///
-    /// This is especially useful when invoked in an environment,  where no user interaction is possible,
+    /// This is especially useful when invoked in an environment, where no user interaction is possible,
     /// e.g. a test runner. Prompts without a default state will be skipped as well, resulting in an error
     /// if the corresponding value was not set as an argument beforehand.
     accept_all: bool,
@@ -55,7 +55,12 @@ enum Action {
         lib_type: LibType,
 
         #[arg(short, long)]
+        // Initialize the project without any explanatory boilerplate code
         plain: bool,
+
+        #[arg(long = "macro")]
+        // Initialize the project as a macro-only crate without .udl files
+        macro_only: bool,
     },
 
     #[command()]
@@ -88,7 +93,8 @@ fn main() -> ExitCode {
             vcs,
             lib_type,
             plain,
-        } => init::run(crate_name, config, vcs, lib_type, plain),
+            macro_only,
+        } => init::run(crate_name, config, vcs, lib_type, plain, macro_only),
 
         Action::Package {
             platforms,

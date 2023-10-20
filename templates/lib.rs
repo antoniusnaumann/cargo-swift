@@ -1,4 +1,8 @@
+{% if macro_only %}
+uniffi::setup_scaffolding!();
+{% else %}
 uniffi::include_scaffolding!("{{ namespace }}");
+{%- endif %}
 
 {% if !plain %}
 // Bindings have to be exposed in a .udl file with the same name as the corresponding .rs file, i.e. lib.udl

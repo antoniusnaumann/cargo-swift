@@ -12,5 +12,7 @@ name = "{{ namespace }}"
 [dependencies]
 uniffi = "0.25"
 
+{% if !macro_only %}
 [build-dependencies]
 uniffi = { version = "0.25", features = ["build"] }
+{%- endif %}
