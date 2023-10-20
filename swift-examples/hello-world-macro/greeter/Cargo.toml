@@ -10,7 +10,7 @@ crate-type = ["cdylib", "staticlib", "lib"]
 name = "greeter"
 
 [dependencies]
-uniffi = "0.24.3"
+uniffi = "0.25"
 
 [build-dependencies]
-uniffi = { version = "0.24.3", features = ["build"] }
+uniffi = { version = "0.25", features = ["build"] }
