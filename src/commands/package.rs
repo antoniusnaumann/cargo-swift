@@ -56,7 +56,10 @@ pub fn run(
     lib_type_arg: LibTypeArg,
 ) -> Result<()> {
     // TODO: Allow path as optional argument to take other directories than current directory
-    let crates = metadata().uniffi_crates();
+    // let crates = metadata().uniffi_crates();
+    let crates = [metadata()
+        .current_crate()
+        .ok_or("Current directory is not part of a crate!")?];
 
     if crates.len() == 1 {
         return run_for_crate(
