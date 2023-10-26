@@ -2,6 +2,7 @@ use std::borrow::Cow;
 
 use camino::Utf8Path;
 use cargo_metadata::{Metadata, MetadataCommand, Package};
+use itertools::Itertools;
 use lazy_static::lazy_static;
 
 use crate::path::PathExt;
@@ -54,13 +55,21 @@ impl MetadataExt for Metadata {
     fn current_crate(&self) -> Option<&Package> {
         let cwd = std::env::current_dir().unwrap();
 
-        self.workspace_packages().into_iter().find(|&p| {
-            let parent = p
-                .manifest_path
-                .parent()
-                .expect("The Cargo.toml path should end with /Cargo.toml");
+        self.workspace_packages()
+            .into_iter()
+            .filter_map(|p| {
+                let parent = p
+                    .manifest_path
+                    .parent()
+                    .expect("The Cargo.toml path should end with /Cargo.toml");
 
-            cwd.starts_with(parent)
-        })
+                if cwd.starts_with(parent) {
+                    Some((p, parent))
+                } else {
+                    None
+                }
+            })
+            .find_or_first(|(_, parent)| parent.starts_with(&cwd))
+            .map(|(package, _)| package)
     }
 }
