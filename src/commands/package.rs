@@ -141,15 +141,16 @@ fn run_for_crate(
         }
     }
 
+    let crate_name = lib.name.replace('-', "_");
     for target in &targets {
-        build_with_output(target, &lib.name, mode, lib_type, config)?;
+        build_with_output(target, &crate_name, mode, lib_type, config)?;
     }
 
-    generate_bindings_with_output(&targets, &lib.name, mode, lib_type, config)?;
+    generate_bindings_with_output(&targets, &crate_name, mode, lib_type, config)?;
 
     recreate_output_dir(&package_name).expect("Could not create package output directory!");
-    create_xcframework_with_output(&targets, &lib.name, &package_name, mode, lib_type, config)?;
-    create_package_with_output(&package_name, &lib.name, disable_warnings, config)?;
+    create_xcframework_with_output(&targets, &crate_name, &package_name, mode, lib_type, config)?;
+    create_package_with_output(&package_name, &crate_name, disable_warnings, config)?;
 
     Ok(())
 }
