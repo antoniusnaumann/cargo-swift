@@ -80,6 +80,10 @@ enum Action {
         #[arg(long, ignore_case = true, default_value_t = package::LibTypeArg::Automatic)]
         /// Chose the how the library should be build. By default, this will be derived from the lib type provided in Cargo.toml
         lib_type: package::LibTypeArg,
+
+        #[arg(long)]
+        /// Disable warnings in generated Swift package code
+        suppress_warnings: bool,
     },
 }
 
@@ -99,11 +103,13 @@ fn main() -> ExitCode {
         Action::Package {
             platforms,
             package_name,
+            suppress_warnings,
             release,
             lib_type,
         } => package::run(
             platforms,
             package_name,
+            suppress_warnings,
             config,
             if release { Mode::Release } else { Mode::Debug },
             lib_type,

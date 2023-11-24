@@ -32,5 +32,5 @@ pub(crate) struct LibUdl<'a> {
 #[template(path = "Package.swift", escape = "none")]
 pub(crate) struct PackageSwift<'a> {
     pub(crate) package_name: &'a str,
-    pub(crate) enable_warnings: bool,
+    pub(crate) disable_warnings: bool,
 }

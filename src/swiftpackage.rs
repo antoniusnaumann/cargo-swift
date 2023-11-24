@@ -6,12 +6,12 @@ use crate::{recreate_dir, templating, Result};
 /// Create artifacts for a swift package given the package name
 ///
 /// **Note**: This method assumes that a directory with the package name and the .xcframework already exists
-pub fn create_swiftpackage(package_name: &str, namespace: &str) -> Result<()> {
+pub fn create_swiftpackage(package_name: &str, namespace: &str, disable_warnings: bool) -> Result<()> {
     // TODO: Instead of assuming the directory and the xcframework, let this manage directory
     //  recreation and let it copy the xcframework
     let package_manifest = templating::PackageSwift {
         package_name,
-        enable_warnings: false,
+        disable_warnings,
     };
 
     write(

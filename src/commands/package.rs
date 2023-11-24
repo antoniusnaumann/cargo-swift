@@ -51,6 +51,7 @@ impl From<LibTypeArg> for Option<LibType> {
 pub fn run(
     platforms: Option<Vec<Platform>>,
     package_name: Option<String>,
+    disable_warnings: bool,
     config: Config,
     mode: Mode,
     lib_type_arg: LibTypeArg,
@@ -66,6 +67,7 @@ pub fn run(
             crates[0],
             platforms.clone(),
             package_name,
+            disable_warnings,
             &config,
             mode,
             lib_type_arg,
@@ -82,6 +84,7 @@ pub fn run(
                 current_crate,
                 platforms.clone(),
                 None,
+                disable_warnings,
                 &config,
                 mode,
                 lib_type_arg.clone(),
@@ -96,6 +99,7 @@ fn run_for_crate(
     current_crate: &Package,
     platforms: Option<Vec<Platform>>,
     package_name: Option<String>,
+    disable_warnings: bool,
     config: &Config,
     mode: Mode,
     lib_type_arg: LibTypeArg,
@@ -145,7 +149,7 @@ fn run_for_crate(
 
     recreate_output_dir(&package_name).expect("Could not create package output directory!");
     create_xcframework_with_output(&targets, &lib.name, &package_name, mode, lib_type, config)?;
-    create_package_with_output(&package_name, &lib.name, config)?;
+    create_package_with_output(&package_name, &lib.name, disable_warnings, config)?;
 
     Ok(())
 }
@@ -394,11 +398,11 @@ fn create_xcframework_with_output(
     .map_err(|e| format!("Failed to create XCFramework due to the following error: \n {e}").into())
 }
 
-fn create_package_with_output(package_name: &str, namespace: &str, config: &Config) -> Result<()> {
+fn create_package_with_output(package_name: &str, namespace: &str, disable_warnings: bool, config: &Config) -> Result<()> {
     run_step(
         config,
         format!("Creating Swift Package '{package_name}'..."),
-        || create_swiftpackage(package_name, namespace),
+        || create_swiftpackage(package_name, namespace, disable_warnings),
     )?;
 
     let spinner = config.silent.not().then(|| {

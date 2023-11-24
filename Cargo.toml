@@ -22,7 +22,7 @@ cargo_metadata = "0.18.1"
 clap = { version = "4.4.8", features = ["derive"] }
 convert_case = "0.6.0"
 nonempty = "0.9.0"
-serde = { version = "1.0.192", features = ["derive"] }
+serde = { version = "1.0.193", features = ["derive"] }
 
 # Templating
 askama = "0.12.1"
@@ -30,13 +30,13 @@ askama = "0.12.1"
 # Terminal UI
 console = "0.15.7"
 dialoguer = { version = "0.11.0", default-features = false }
-execute = "0.2.12"
+execute = "0.2.13"
 indicatif = "0.17.7"
 
 # FFI Bindings
-uniffi_bindgen = { version = "0.25.1" }
+uniffi_bindgen = { version = "0.25.2" }
 # Allow testing with the latest dev version of UniFFI
-# uniffi_bindgen = {  version = "0.24.3",  git = "https://github.com/mozilla/uniffi-rs.git" }
+# uniffi_bindgen = {  version = "0.25.2",  git = "https://github.com/mozilla/uniffi-rs.git" }
 
 # Error Handling
 anyhow = "1.0.75"
