@@ -1,0 +1,22 @@
+name: Dependencies
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  schedule:
+    - cron: "12 16 * * 5"
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Cargo Outdated
+        run: cargo outdated --exit-code 1
+      - name: Cargo Audit
+        run: cargo audit -D warnings

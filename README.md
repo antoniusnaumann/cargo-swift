@@ -8,6 +8,7 @@
 [![Examples](https://github.com/antoniusnaumann/cargo-swift/actions/workflows/examples.yml/badge.svg)](https://github.com/antoniusnaumann/cargo-swift/actions/workflows/examples.yml)
 [![E2E Tests](https://github.com/antoniusnaumann/cargo-swift/actions/workflows/end-to-end.yml/badge.svg)](https://github.com/antoniusnaumann/cargo-swift/actions/workflows/end-to-end.yml)
 [![Clippy](https://github.com/antoniusnaumann/cargo-swift/actions/workflows/clippy.yml/badge.svg)](https://github.com/antoniusnaumann/cargo-swift/actions/workflows/clippy.yml)
+[![Dependencies](https://github.com/antoniusnaumann/cargo-swift/actions/workflows/audit.yml/badge.svg)](https://github.com/antoniusnaumann/cargo-swift/actions/workflows/audit.yml)
 
 
 > A cargo plugin to easily build Swift packages from Rust code
