@@ -55,6 +55,7 @@ pub fn run(
     config: Config,
     mode: Mode,
     lib_type_arg: LibTypeArg,
+    skip_toolchains_check: bool,
 ) -> Result<()> {
     // TODO: Allow path as optional argument to take other directories than current directory
     // let crates = metadata().uniffi_crates();
@@ -71,6 +72,7 @@ pub fn run(
             &config,
             mode,
             lib_type_arg,
+            skip_toolchains_check,
         );
     } else if package_name.is_some() {
         Err("Package name can only be specified when building a single crate!")?;
@@ -88,6 +90,7 @@ pub fn run(
                 &config,
                 mode,
                 lib_type_arg.clone(),
+                skip_toolchains_check,
             )
         })
         .filter_map(|result| result.err())
@@ -103,6 +106,7 @@ fn run_for_crate(
     config: &Config,
     mode: Mode,
     lib_type_arg: LibTypeArg,
+    skip_toolchains_check: bool,
 ) -> Result<()> {
     let lib = current_crate
         .targets
@@ -132,12 +136,14 @@ fn run_for_crate(
         .map(|p| p.target())
         .collect();
 
-    let missing_toolchains = check_installed_toolchains(&targets);
-    if !missing_toolchains.is_empty() {
-        if config.accept_all || prompt_toolchain_installation(&missing_toolchains) {
-            install_toolchains(&missing_toolchains, config.silent)?;
-        } else {
-            Err("Toolchains for some target platforms were missing!")?;
+    if !skip_toolchains_check {
+        let missing_toolchains = check_installed_toolchains(&targets);
+        if !missing_toolchains.is_empty() {
+            if config.accept_all || prompt_toolchain_installation(&missing_toolchains) {
+                install_toolchains(&missing_toolchains, config.silent)?;
+            } else {
+                Err("Toolchains for some target platforms were missing!")?;
+            }
         }
     }
 
@@ -399,7 +405,12 @@ fn create_xcframework_with_output(
     .map_err(|e| format!("Failed to create XCFramework due to the following error: \n {e}").into())
 }
 
-fn create_package_with_output(package_name: &str, namespace: &str, disable_warnings: bool, config: &Config) -> Result<()> {
+fn create_package_with_output(
+    package_name: &str,
+    namespace: &str,
+    disable_warnings: bool,
+    config: &Config,
+) -> Result<()> {
     run_step(
         config,
         format!("Creating Swift Package '{package_name}'..."),
