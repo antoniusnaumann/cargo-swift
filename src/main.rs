@@ -84,6 +84,10 @@ enum Action {
         #[arg(long)]
         /// Disable warnings in generated Swift package code
         suppress_warnings: bool,
+
+        #[arg(long)]
+        /// Disable toolchains check
+        skip_toolchains_check: bool,
     },
 }
 
@@ -106,6 +110,7 @@ fn main() -> ExitCode {
             suppress_warnings,
             release,
             lib_type,
+            skip_toolchains_check,
         } => package::run(
             platforms,
             package_name,
@@ -113,6 +118,7 @@ fn main() -> ExitCode {
             config,
             if release { Mode::Release } else { Mode::Debug },
             lib_type,
+            skip_toolchains_check,
         ),
     };
 
