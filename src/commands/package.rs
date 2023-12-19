@@ -98,6 +98,7 @@ pub fn run(
         .into()
 }
 
+#[allow(clippy::too_many_arguments)]
 fn run_for_crate(
     current_crate: &Package,
     platforms: Option<Vec<Platform>>,
