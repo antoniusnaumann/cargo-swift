@@ -25,7 +25,7 @@ let package = Package(
                 .target(name: "RustFramework")
             ]{% if disable_warnings %},
             swiftSettings: [
-                .unsafeFlags(["-suppress-warnings"]),
+                .define("SWIFT_PACKAGE_MANAGER"),
             ]
             {%- endif %}
         ),
