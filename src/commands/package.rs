@@ -120,6 +120,7 @@ fn run_for_crate(
         .filter_map(|t| t.parse().ok())
         .collect::<Vec<_>>();
     let lib_type = pick_lib_type(&lib_types, lib_type_arg.clone().into(), config)?;
+    warning!(&config, "Building as dynamic library is discouraged. It might prevent apps that use this library from publishing to the App Store.");
 
     let crate_name = current_crate.name.to_lowercase();
     let package_name =
