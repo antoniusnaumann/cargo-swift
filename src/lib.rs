@@ -32,8 +32,8 @@ mod templating;
 mod xcframework;
 
 pub use commands::*;
-pub use console::error::Result;
-pub use console::Config;
+pub use crate::console::error::Result;
+pub use crate::console::Config;
 pub use lib_type::LibType;
 pub use targets::*;
 
