@@ -20,6 +20,7 @@ pub fn generate_bindings(lib_path: &Utf8Path, crate_name: &str) -> Result<()> {
         lib_path,
         Some(crate_name.to_owned()),
         &[TargetLanguage::Swift],
+        None,
         out_dir,
         false,
     )?;
