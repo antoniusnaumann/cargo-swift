@@ -30,6 +30,19 @@ Install this plugin, simply run
 cargo install cargo-swift
 ```
 
+#### Installing for a different UniFFI version
+Currently, `cargo swift` does not detect the UniFFI version of your project automatically, so for now, you have to install a matching version of cargo swift: 
+| UniFFI | cargo swift |
+|--------|-------------|
+| 0.25   | 0.5         |
+| 0.26   | 0.6         |
+
+To do so, run 
+```
+cargo install cargo-swift@0.X -f  
+```
+and replace `0.X` with the cargo swift version you want to install.
+
 ### Using cargo-swift
 You can create a new library crate by running
 ```

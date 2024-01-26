@@ -1,7 +1,7 @@
 [package]
 name = "cargo-swift"
 description = "A cargo plugin to easily build Swift packages from Rust code for use in iOS and macOS applications"
-version = "0.5.1"
+version = "0.6.0"
 edition = "2021"
 authors = ["Antonius Naumann <git@antonius.dev>"]
 license = "MIT OR Apache-2.0"
