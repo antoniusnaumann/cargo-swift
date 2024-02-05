@@ -12,13 +12,13 @@ use execute::{command, Execute};
 use indicatif::MultiProgress;
 
 use crate::bindings::generate_bindings;
-use crate::console::*;
 use crate::console::{run_step, run_step_with_commands};
 use crate::lib_type::LibType;
 use crate::metadata::{metadata, MetadataExt};
 use crate::swiftpackage::{create_swiftpackage, recreate_output_dir};
 use crate::targets::*;
 use crate::xcframework::create_xcframework;
+use crate::console::*;
 
 #[derive(ValueEnum, Debug, Clone)]
 #[value()]
@@ -120,7 +120,13 @@ fn run_for_crate(
         .filter_map(|t| t.parse().ok())
         .collect::<Vec<_>>();
     let lib_type = pick_lib_type(&lib_types, lib_type_arg.clone().into(), config)?;
-    warning!(&config, "Building as dynamic library is discouraged. It might prevent apps that use this library from publishing to the App Store.");
+
+    if lib_type == LibType::Dynamic {
+        warning!(
+            &config, 
+            "Building as dynamic library is discouraged. It might prevent apps that use this library from publishing to the App Store."
+        );
+    }
 
     let crate_name = current_crate.name.to_lowercase();
     let package_name =
