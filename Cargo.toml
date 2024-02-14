@@ -19,10 +19,10 @@ exclude = ["/readme", "/.github", "/testing", "/swift-examples", "*-DRAFT.md"]
 [dependencies]
 camino = "1.1.6"
 cargo_metadata = "0.18.1"
-clap = { version = "4.4.18", features = ["derive"] }
+clap = { version = "4.5.0", features = ["derive"] }
 convert_case = "0.6.0"
 nonempty = "0.9.0"
-serde = { version = "1.0.195", features = ["derive"] }
+serde = { version = "1.0.196", features = ["derive"] }
 
 # Templating
 askama = "0.12.1"
@@ -31,7 +31,7 @@ askama = "0.12.1"
 console = "0.15.8"
 dialoguer = { version = "0.11.0", default-features = false }
 execute = "0.2.13"
-indicatif = "0.17.7"
+indicatif = "0.17.8"
 
 # FFI Bindings
 uniffi_bindgen = { version = "0.26.1" }
@@ -40,8 +40,8 @@ uniffi_bindgen = { version = "0.26.1" }
 
 # Error Handling
 anyhow = "1.0.79"
-thiserror = "1.0.56"
+thiserror = "1.0.57"
 lazy_static = "1.4.0"
-itertools = "0.12.0"
+itertools = "0.12.1"
 
 [features]
