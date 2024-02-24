@@ -8,14 +8,14 @@ jobs:
   test:
     runs-on: macos-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Test
       run: cargo test --verbose
   publish-crates-io:
     runs-on: macos-latest
     needs: test
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Publish to crates.io
       env: 
         CARGO_REGISTRY_TOKEN: ${{ secrets.CRATES_IO_LOGIN }}

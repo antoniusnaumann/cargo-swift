@@ -17,7 +17,7 @@ jobs:
         test: [init, package]
     runs-on: ${{ matrix.os }}
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Install
       run: cargo install --force --path .
     - name: Create artifacts directory
