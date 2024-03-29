@@ -36,6 +36,7 @@ Currently, `cargo swift` does not detect the UniFFI version of your project auto
 |--------|-------------|
 | 0.25   | 0.5         |
 | 0.26   | 0.6         |
+| 0.27   | 0.7         |
 
 To do so, run 
 ```
