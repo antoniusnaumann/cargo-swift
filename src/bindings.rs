@@ -2,7 +2,7 @@ use std::fs::{self, create_dir};
 
 use crate::Result;
 use camino::Utf8Path;
-use uniffi_bindgen::bindings::TargetLanguage;
+use uniffi_bindgen::bindings::swift::gen_swift::SwiftBindingGenerator;
 
 use crate::recreate_dir;
 
@@ -19,7 +19,7 @@ pub fn generate_bindings(lib_path: &Utf8Path, crate_name: &str) -> Result<()> {
     uniffi_bindgen::library_mode::generate_bindings(
         lib_path,
         Some(crate_name.to_owned()),
-        &[TargetLanguage::Swift],
+        &SwiftBindingGenerator {},
         None,
         out_dir,
         false,

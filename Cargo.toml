@@ -19,10 +19,10 @@ exclude = ["/readme", "/.github", "/testing", "/swift-examples", "*-DRAFT.md"]
 [dependencies]
 camino = "1.1.6"
 cargo_metadata = "0.18.1"
-clap = { version = "4.5.0", features = ["derive"] }
+clap = { version = "4.5.4", features = ["derive"] }
 convert_case = "0.6.0"
-nonempty = "0.9.0"
-serde = { version = "1.0.196", features = ["derive"] }
+nonempty = "0.10.0"
+serde = { version = "1.0.197", features = ["derive"] }
 
 # Templating
 askama = "0.12.1"
@@ -34,13 +34,11 @@ execute = "0.2.13"
 indicatif = "0.17.8"
 
 # FFI Bindings
-uniffi_bindgen = { version = "0.26.1" }
-# Allow testing with the latest dev version of UniFFI
-# uniffi_bindgen = {  version = "0.25.2",  git = "https://github.com/mozilla/uniffi-rs.git" }
+uniffi_bindgen = { version = "0.27.0" }
 
 # Error Handling
-anyhow = "1.0.79"
-thiserror = "1.0.57"
+anyhow = "1.0.81"
+thiserror = "1.0.58"
 lazy_static = "1.4.0"
 itertools = "0.12.1"
 
