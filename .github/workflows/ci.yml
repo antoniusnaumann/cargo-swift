@@ -21,4 +21,4 @@ jobs:
       - name: Test
         run: cargo test --verbose
       - name: Publish (Dry Run)
-        run: cargo publish --dry-run
+        run: cargo publish --dry-run --allow-dirty
