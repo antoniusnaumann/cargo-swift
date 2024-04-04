@@ -164,7 +164,7 @@ fn run_for_crate(
 
     recreate_output_dir(&package_name).expect("Could not create package output directory!");
     create_xcframework_with_output(&targets, &crate_name, &package_name, mode, lib_type, config)?;
-    create_package_with_output(&package_name, &crate_name, disable_warnings, config)?;
+    create_package_with_output(&package_name, disable_warnings, config)?;
 
     Ok(())
 }
@@ -361,7 +361,7 @@ fn generate_bindings_with_output(
         let arch = archs.first();
         let lib_path: Utf8PathBuf = format!("{target}/{arch}/{mode}/{lib_file}").into();
 
-        generate_bindings(&lib_path, lib_name)
+        generate_bindings(&lib_path)
             .map_err(|e| format!("Could not generate UniFFI bindings for udl files due to the following error: \n {e}").into())
     })
 }
@@ -415,14 +415,13 @@ fn create_xcframework_with_output(
 
 fn create_package_with_output(
     package_name: &str,
-    namespace: &str,
     disable_warnings: bool,
     config: &Config,
 ) -> Result<()> {
     run_step(
         config,
         format!("Creating Swift Package '{package_name}'..."),
-        || create_swiftpackage(package_name, namespace, disable_warnings),
+        || create_swiftpackage(package_name, disable_warnings),
     )?;
 
     let spinner = config.silent.not().then(|| {

@@ -141,7 +141,7 @@ dependencies = [
 
 [[package]]
 name = "cargo-swift"
-version = "0.6.1"
+version = "0.7.0"
 dependencies = [
  "anyhow",
  "askama",
@@ -152,6 +152,7 @@ dependencies = [
  "convert_case",
  "dialoguer",
  "execute",
+ "glob",
  "indicatif",
  "itertools",
  "lazy_static",
