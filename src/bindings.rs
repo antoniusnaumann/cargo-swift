@@ -29,19 +29,20 @@ pub fn generate_bindings(lib_path: &Utf8Path) -> Result<()> {
     )?;
 
     for output in uniffi_outputs {
-        let file_name = output.config.module_name();
+        let crate_name = output.crate_name;
         fs::copy(
-            out_dir.join(format!("{file_name}.swift")),
-            sources.join(format!("{file_name}.swift")),
+            out_dir.join(format!("{crate_name}.swift")),
+            sources.join(format!("{crate_name}.swift")),
         )?;
 
+        let ffi_name = format!("{crate_name}FFI");
         fs::copy(
-            out_dir.join(output.config.header_filename()),
-            headers.join(output.config.header_filename()),
+            out_dir.join(format!("{ffi_name}.h")),
+            headers.join(format!("{ffi_name}.h")),
         )?;
         fs::copy(
-            out_dir.join(output.config.modulemap_filename()),
-            headers.join(output.config.modulemap_filename()),
+            out_dir.join(format!("{ffi_name}.modulemap")),
+            headers.join(format!("{ffi_name}.modulemap")),
         )?;
     }
 
