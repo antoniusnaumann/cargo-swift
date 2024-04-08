@@ -1,4 +1,7 @@
-use std::fs::{self, create_dir};
+use std::{
+    fs::{self, create_dir},
+    io,
+};
 
 use crate::Result;
 use camino::Utf8Path;
@@ -28,6 +31,11 @@ pub fn generate_bindings(lib_path: &Utf8Path) -> Result<()> {
         false,
     )?;
 
+    let mut modulemap = fs::OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(headers.join("module.modulemap"))?;
+
     for output in uniffi_outputs {
         let crate_name = output.crate_name;
         fs::copy(
@@ -40,10 +48,11 @@ pub fn generate_bindings(lib_path: &Utf8Path) -> Result<()> {
             out_dir.join(format!("{ffi_name}.h")),
             headers.join(format!("{ffi_name}.h")),
         )?;
-        fs::copy(
-            out_dir.join(format!("{ffi_name}.modulemap")),
-            headers.join(format!("{ffi_name}.modulemap")),
-        )?;
+
+        let mut modulemap_part = fs::OpenOptions::new()
+            .read(true)
+            .open(out_dir.join(format!("{ffi_name}.modulemap")))?;
+        io::copy(&mut modulemap_part, &mut modulemap)?;
     }
 
     Ok(())

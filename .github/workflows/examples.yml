@@ -2,9 +2,9 @@ name: Examples
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
 
 env:
   CARGO_TERM_COLOR: always
@@ -13,23 +13,25 @@ jobs:
   tests:
     strategy:
       matrix:
-        path: [
-            './swift-examples/hello-world/greeter',
-            './swift-examples/hello-world-macro/greeter'
+        path:
+          [
+            "./swift-examples/hello-world/greeter",
+            "./swift-examples/hello-world-macro/greeter",
+            "./swift-examples/hello-world-macro-multi-crate/greeter",
           ]
         target: [
-            'platform=macOS,arch=x86_64', 
-            'generic/platform=iOS',
+            "platform=macOS,arch=x86_64",
+            "generic/platform=iOS",
             # 'platform=iOS Simulator,os=latest'
           ]
     runs-on: macos-latest
     steps:
-    - uses: actions/checkout@v4
-    - name: Install
-      run: cargo install --force --path .
-    - name: Build example libraries
-      working-directory: ${{ matrix.path }}
-      run: cargo swift package --accept-all
-    - name: Build example apps
-      working-directory: ${{ matrix.path }}/../app
-      run: xcodebuild -scheme App -destination "${{ matrix.target }}" CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO
+      - uses: actions/checkout@v4
+      - name: Install
+        run: cargo install --force --path .
+      - name: Build example libraries
+        working-directory: ${{ matrix.path }}
+        run: cargo swift package --accept-all
+      - name: Build example apps
+        working-directory: ${{ matrix.path }}/../app
+        run: xcodebuild -scheme App -destination "${{ matrix.target }}" CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO
