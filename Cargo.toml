@@ -21,6 +21,7 @@ camino = "1.1.6"
 cargo_metadata = "0.18.1"
 clap = { version = "4.5.4", features = ["derive"] }
 convert_case = "0.6.0"
+glob = "0.3.1"
 nonempty = "0.10.0"
 serde = { version = "1.0.197", features = ["derive"] }
 

@@ -1,4 +1,7 @@
-use std::fs::{self, create_dir};
+use std::{
+    fs::{self, create_dir},
+    io,
+};
 
 use crate::Result;
 use camino::Utf8Path;
@@ -7,7 +10,7 @@ use uniffi_bindgen::{bindings::TargetLanguage, BindingGeneratorDefault};
 use crate::recreate_dir;
 
 /// Generates UniFFI bindings for crate and returns the .udl namespace
-pub fn generate_bindings(lib_path: &Utf8Path, crate_name: &str) -> Result<()> {
+pub fn generate_bindings(lib_path: &Utf8Path) -> Result<()> {
     let out_dir = Utf8Path::new("./generated");
     let headers = out_dir.join("headers");
     let sources = out_dir.join("sources");
@@ -16,9 +19,9 @@ pub fn generate_bindings(lib_path: &Utf8Path, crate_name: &str) -> Result<()> {
     create_dir(&headers)?;
     create_dir(&sources)?;
 
-    uniffi_bindgen::library_mode::generate_bindings(
+    let uniffi_outputs = uniffi_bindgen::library_mode::generate_bindings(
         lib_path,
-        Some(crate_name.to_owned()),
+        None,
         &BindingGeneratorDefault {
             target_languages: vec![TargetLanguage::Swift],
             try_format_code: false,
@@ -28,17 +31,29 @@ pub fn generate_bindings(lib_path: &Utf8Path, crate_name: &str) -> Result<()> {
         false,
     )?;
 
-    fs::copy(
-        out_dir.join(format!("{crate_name}.swift")),
-        sources.join(format!("{crate_name}.swift")),
-    )?;
+    let mut modulemap = fs::OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(headers.join("module.modulemap"))?;
 
-    let header = format!("{crate_name}FFI.h");
-    fs::copy(out_dir.join(&header), headers.join(&header))?;
-    fs::copy(
-        out_dir.join(format!("{crate_name}FFI.modulemap")),
-        headers.join("module.modulemap"),
-    )?;
+    for output in uniffi_outputs {
+        let crate_name = output.crate_name;
+        fs::copy(
+            out_dir.join(format!("{crate_name}.swift")),
+            sources.join(format!("{crate_name}.swift")),
+        )?;
+
+        let ffi_name = format!("{crate_name}FFI");
+        fs::copy(
+            out_dir.join(format!("{ffi_name}.h")),
+            headers.join(format!("{ffi_name}.h")),
+        )?;
+
+        let mut modulemap_part = fs::OpenOptions::new()
+            .read(true)
+            .open(out_dir.join(format!("{ffi_name}.modulemap")))?;
+        io::copy(&mut modulemap_part, &mut modulemap)?;
+    }
 
     Ok(())
 }
