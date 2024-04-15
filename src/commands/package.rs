@@ -12,13 +12,13 @@ use execute::{command, Execute};
 use indicatif::MultiProgress;
 
 use crate::bindings::generate_bindings;
+use crate::console::*;
 use crate::console::{run_step, run_step_with_commands};
 use crate::lib_type::LibType;
 use crate::metadata::{metadata, MetadataExt};
 use crate::swiftpackage::{create_swiftpackage, recreate_output_dir};
 use crate::targets::*;
 use crate::xcframework::create_xcframework;
-use crate::console::*;
 
 #[derive(ValueEnum, Debug, Clone)]
 #[value()]
@@ -48,6 +48,14 @@ impl From<LibTypeArg> for Option<LibType> {
     }
 }
 
+#[derive(Debug, Clone)]
+pub struct FeatureOptions {
+    pub features: Option<Vec<String>>,
+    pub all_features: bool,
+    pub no_default_features: bool,
+}
+
+#[allow(clippy::too_many_arguments)]
 pub fn run(
     platforms: Option<Vec<Platform>>,
     package_name: Option<String>,
@@ -55,6 +63,7 @@ pub fn run(
     config: Config,
     mode: Mode,
     lib_type_arg: LibTypeArg,
+    features: FeatureOptions,
     skip_toolchains_check: bool,
 ) -> Result<()> {
     // TODO: Allow path as optional argument to take other directories than current directory
@@ -72,6 +81,7 @@ pub fn run(
             &config,
             mode,
             lib_type_arg,
+            features,
             skip_toolchains_check,
         );
     } else if package_name.is_some() {
@@ -90,6 +100,7 @@ pub fn run(
                 &config,
                 mode,
                 lib_type_arg.clone(),
+                features.clone(),
                 skip_toolchains_check,
             )
         })
@@ -107,6 +118,7 @@ fn run_for_crate(
     config: &Config,
     mode: Mode,
     lib_type_arg: LibTypeArg,
+    features: FeatureOptions,
     skip_toolchains_check: bool,
 ) -> Result<()> {
     let lib = current_crate
@@ -123,7 +135,7 @@ fn run_for_crate(
 
     if lib_type == LibType::Dynamic {
         warning!(
-            &config, 
+            &config,
             "Building as dynamic library is discouraged. It might prevent apps that use this library from publishing to the App Store."
         );
     }
@@ -157,7 +169,7 @@ fn run_for_crate(
 
     let crate_name = lib.name.replace('-', "_");
     for target in &targets {
-        build_with_output(target, &crate_name, mode, lib_type, config)?;
+        build_with_output(target, &crate_name, mode, lib_type, config, &features)?;
     }
 
     generate_bindings_with_output(&targets, &crate_name, mode, lib_type, config)?;
@@ -372,8 +384,9 @@ fn build_with_output(
     mode: Mode,
     lib_type: LibType,
     config: &Config,
+    features: &FeatureOptions,
 ) -> Result<()> {
-    let mut commands = target.commands(lib_name, mode, lib_type);
+    let mut commands = target.commands(lib_name, mode, lib_type, features);
     for command in &mut commands {
         command.env("CARGO_TERM_COLOR", "always");
     }
