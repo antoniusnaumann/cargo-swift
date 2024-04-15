@@ -12,13 +12,13 @@ use execute::{command, Execute};
 use indicatif::MultiProgress;
 
 use crate::bindings::generate_bindings;
+use crate::console::*;
 use crate::console::{run_step, run_step_with_commands};
 use crate::lib_type::LibType;
 use crate::metadata::{metadata, MetadataExt};
 use crate::swiftpackage::{create_swiftpackage, recreate_output_dir};
 use crate::targets::*;
 use crate::xcframework::create_xcframework;
-use crate::console::*;
 
 #[derive(ValueEnum, Debug, Clone)]
 #[value()]
@@ -55,7 +55,8 @@ pub struct FeatureOptions {
     pub no_default_features: bool,
 }
 
-pub fn  run(
+#[allow(clippy::too_many_arguments)]
+pub fn run(
     platforms: Option<Vec<Platform>>,
     package_name: Option<String>,
     disable_warnings: bool,
@@ -80,7 +81,7 @@ pub fn  run(
             &config,
             mode,
             lib_type_arg,
-                features,
+            features,
             skip_toolchains_check,
         );
     } else if package_name.is_some() {
@@ -134,7 +135,7 @@ fn run_for_crate(
 
     if lib_type == LibType::Dynamic {
         warning!(
-            &config, 
+            &config,
             "Building as dynamic library is discouraged. It might prevent apps that use this library from publishing to the App Store."
         );
     }
@@ -360,7 +361,7 @@ fn generate_bindings_with_output(
     lib_name: &str,
     mode: Mode,
     lib_type: LibType,
-    config: &Config
+    config: &Config,
 ) -> Result<()> {
     run_step(config, "Generating Swift bindings...", || {
         let lib_file = library_file_name(lib_name, lib_type);
@@ -377,7 +378,7 @@ fn generate_bindings_with_output(
     })
 }
 
-fn   build_with_output(
+fn build_with_output(
     target: &Target,
     lib_name: &str,
     mode: Mode,
@@ -385,7 +386,7 @@ fn   build_with_output(
     config: &Config,
     features: &FeatureOptions,
 ) -> Result<()> {
-    let mut commands = target. commands(lib_name, mode, lib_type, features);
+    let mut commands = target.commands(lib_name, mode, lib_type, features);
     for command in &mut commands {
         command.env("CARGO_TERM_COLOR", "always");
     }
