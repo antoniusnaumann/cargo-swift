@@ -1,6 +1,10 @@
 use std::process::ExitCode;
 
-use cargo_swift::{init, package, Config, LibType, Mode};
+use cargo_swift::{
+    init,
+    package::{self, FeatureOptions},
+    Config, LibType, Mode,
+};
 use clap::{Parser, Subcommand};
 
 #[derive(Parser)]
@@ -88,6 +92,15 @@ enum Action {
         #[arg(long)]
         /// Disable toolchains check
         skip_toolchains_check: bool,
+
+        #[arg(short = 'F', long, trailing_var_arg = true)]
+        features: Option<Vec<String>>,
+
+        #[arg(long)]
+        all_features: bool,
+
+        #[arg(long)]
+        no_default_features: bool,
     },
 }
 
@@ -111,6 +124,9 @@ fn main() -> ExitCode {
             release,
             lib_type,
             skip_toolchains_check,
+            features,
+            all_features,
+            no_default_features,
         } => package::run(
             platforms,
             package_name,
@@ -118,6 +134,11 @@ fn main() -> ExitCode {
             config,
             if release { Mode::Release } else { Mode::Debug },
             lib_type,
+            FeatureOptions {
+                features,
+                all_features,
+                no_default_features,
+            },
             skip_toolchains_check,
         ),
     };

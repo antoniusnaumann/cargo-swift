@@ -5,6 +5,7 @@ use nonempty::{nonempty, NonEmpty};
 
 use crate::lib_type::LibType;
 use crate::metadata::{metadata, MetadataExt};
+use crate::package::FeatureOptions;
 
 pub trait TargetInfo {
     fn target(&self) -> Target;
@@ -41,15 +42,32 @@ impl Display for Mode {
 }
 
 impl Target {
-    fn cargo_build_commands(&self, mode: Mode) -> Vec<Command> {
-        let flag = match mode {
-            Mode::Debug => "",
-            Mode::Release => "--release",
-        };
-
+    fn cargo_build_commands(&self, mode: Mode, features: &FeatureOptions) -> Vec<Command> {
         self.architectures()
             .into_iter()
-            .map(|arch| command(format!("cargo build --target {arch} {flag}")))
+            .map(|arch| {
+                let mut cmd = command("cargo build");
+                cmd.arg("--target").arg(arch);
+
+                match mode {
+                    Mode::Debug => {}
+                    Mode::Release => {
+                        cmd.arg("--release");
+                    }
+                }
+
+                if let Some(features) = &features.features {
+                    cmd.arg("--features").arg(features.join(","));
+                }
+                if features.all_features {
+                    cmd.arg("--all-features");
+                }
+                if features.no_default_features {
+                    cmd.arg("--no-default-features");
+                }
+
+                cmd
+            })
             .collect()
     }
 
@@ -96,8 +114,14 @@ impl Target {
     ///
     /// This function returns a list of commands that should be executed in their given
     /// order to build this target (and bundle architecture targets with lipo if it is a universal target).
-    pub fn commands(&self, lib_name: &str, mode: Mode, lib_type: LibType) -> Vec<Command> {
-        self.cargo_build_commands(mode)
+    pub fn commands(
+        &self,
+        lib_name: &str,
+        mode: Mode,
+        lib_type: LibType,
+        features: &FeatureOptions,
+    ) -> Vec<Command> {
+        self.cargo_build_commands(mode, features)
             .into_iter()
             .chain(self.lipo_commands(lib_name, mode, lib_type))
             .chain(self.rpath_install_id_commands(lib_name, mode, lib_type))

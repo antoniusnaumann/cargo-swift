@@ -48,13 +48,21 @@ impl From<LibTypeArg> for Option<LibType> {
     }
 }
 
-pub fn run(
+#[derive(Debug, Clone)]
+pub struct FeatureOptions {
+    pub features: Option<Vec<String>>,
+    pub all_features: bool,
+    pub no_default_features: bool,
+}
+
+pub fn  run(
     platforms: Option<Vec<Platform>>,
     package_name: Option<String>,
     disable_warnings: bool,
     config: Config,
     mode: Mode,
     lib_type_arg: LibTypeArg,
+    features: FeatureOptions,
     skip_toolchains_check: bool,
 ) -> Result<()> {
     // TODO: Allow path as optional argument to take other directories than current directory
@@ -72,6 +80,7 @@ pub fn run(
             &config,
             mode,
             lib_type_arg,
+                features,
             skip_toolchains_check,
         );
     } else if package_name.is_some() {
@@ -90,6 +99,7 @@ pub fn run(
                 &config,
                 mode,
                 lib_type_arg.clone(),
+                features.clone(),
                 skip_toolchains_check,
             )
         })
@@ -107,6 +117,7 @@ fn run_for_crate(
     config: &Config,
     mode: Mode,
     lib_type_arg: LibTypeArg,
+    features: FeatureOptions,
     skip_toolchains_check: bool,
 ) -> Result<()> {
     let lib = current_crate
@@ -157,7 +168,7 @@ fn run_for_crate(
 
     let crate_name = lib.name.replace('-', "_");
     for target in &targets {
-        build_with_output(target, &crate_name, mode, lib_type, config)?;
+        build_with_output(target, &crate_name, mode, lib_type, config, &features)?;
     }
 
     generate_bindings_with_output(&targets, &crate_name, mode, lib_type, config)?;
@@ -349,7 +360,7 @@ fn generate_bindings_with_output(
     lib_name: &str,
     mode: Mode,
     lib_type: LibType,
-    config: &Config,
+    config: &Config
 ) -> Result<()> {
     run_step(config, "Generating Swift bindings...", || {
         let lib_file = library_file_name(lib_name, lib_type);
@@ -366,14 +377,15 @@ fn generate_bindings_with_output(
     })
 }
 
-fn build_with_output(
+fn   build_with_output(
     target: &Target,
     lib_name: &str,
     mode: Mode,
     lib_type: LibType,
     config: &Config,
+    features: &FeatureOptions,
 ) -> Result<()> {
-    let mut commands = target.commands(lib_name, mode, lib_type);
+    let mut commands = target. commands(lib_name, mode, lib_type, features);
     for command in &mut commands {
         command.env("CARGO_TERM_COLOR", "always");
     }
