@@ -59,6 +59,7 @@ pub struct FeatureOptions {
 pub fn run(
     platforms: Option<Vec<Platform>>,
     package_name: Option<String>,
+    xcframework_name: String,
     disable_warnings: bool,
     config: Config,
     mode: Mode,
@@ -77,6 +78,7 @@ pub fn run(
             crates[0],
             platforms.clone(),
             package_name,
+            xcframework_name,
             disable_warnings,
             &config,
             mode,
@@ -96,6 +98,7 @@ pub fn run(
                 current_crate,
                 platforms.clone(),
                 None,
+                xcframework_name.clone(),
                 disable_warnings,
                 &config,
                 mode,
@@ -114,6 +117,7 @@ fn run_for_crate(
     current_crate: &Package,
     platforms: Option<Vec<Platform>>,
     package_name: Option<String>,
+    xcframework_name: String,
     disable_warnings: bool,
     config: &Config,
     mode: Mode,
@@ -175,8 +179,16 @@ fn run_for_crate(
     generate_bindings_with_output(&targets, &crate_name, mode, lib_type, config)?;
 
     recreate_output_dir(&package_name).expect("Could not create package output directory!");
-    create_xcframework_with_output(&targets, &crate_name, &package_name, mode, lib_type, config)?;
-    create_package_with_output(&package_name, disable_warnings, config)?;
+    create_xcframework_with_output(
+        &targets,
+        &crate_name,
+        &package_name,
+        &xcframework_name,
+        mode,
+        lib_type,
+        config,
+    )?;
+    create_package_with_output(&package_name, &xcframework_name, disable_warnings, config)?;
 
     Ok(())
 }
@@ -404,6 +416,7 @@ fn create_xcframework_with_output(
     targets: &[Target],
     lib_name: &str,
     package_name: &str,
+    xcframework_name: &str,
     mode: Mode,
     lib_type: LibType,
     config: &Config,
@@ -417,6 +430,7 @@ fn create_xcframework_with_output(
         create_xcframework(
             targets,
             lib_name,
+            xcframework_name,
             &generated_dir,
             &output_dir,
             mode,
@@ -428,13 +442,14 @@ fn create_xcframework_with_output(
 
 fn create_package_with_output(
     package_name: &str,
+    xcframework_name: &str,
     disable_warnings: bool,
     config: &Config,
 ) -> Result<()> {
     run_step(
         config,
         format!("Creating Swift Package '{package_name}'..."),
-        || create_swiftpackage(package_name, disable_warnings),
+        || create_swiftpackage(package_name, xcframework_name, disable_warnings),
     )?;
 
     let spinner = config.silent.not().then(|| {
