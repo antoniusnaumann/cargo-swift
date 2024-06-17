@@ -9,6 +9,7 @@ use crate::{Mode, Result, Target};
 pub fn create_xcframework(
     targets: &[Target],
     lib_name: &str,
+    xcframework_name: &str,
     generated_dir: &Path,
     output_dir: &Path,
     mode: Mode,
@@ -28,9 +29,7 @@ pub fn create_xcframework(
         .to_str()
         .ok_or(anyhow!("Output directory has an invalid name!"))?;
 
-    // TODO: this should be given as an argument instead of being hardcoded
-    //  because it needs to match the name given in swift package manifest
-    let framework = format!("{output_dir_name}/RustFramework.xcframework");
+    let framework = format!("{output_dir_name}/{xcframework_name}.xcframework");
 
     let mut xcodebuild = Command::new("xcodebuild");
     xcodebuild.arg("-create-xcframework");

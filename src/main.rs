@@ -77,6 +77,9 @@ enum Action {
         #[arg(short = 'n', long = "name")]
         package_name: Option<String>,
 
+        #[arg(long, default_value = "RustFramework")]
+        xcframework_name: String,
+
         #[arg(short, long)]
         /// Build package optimized for release (default: debug)
         release: bool,
@@ -120,6 +123,7 @@ fn main() -> ExitCode {
         Action::Package {
             platforms,
             package_name,
+            xcframework_name,
             suppress_warnings,
             release,
             lib_type,
@@ -130,6 +134,7 @@ fn main() -> ExitCode {
         } => package::run(
             platforms,
             package_name,
+            xcframework_name,
             suppress_warnings,
             config,
             if release { Mode::Release } else { Mode::Debug },
