@@ -22,7 +22,6 @@ pub(crate) fn metadata() -> &'static Metadata {
 
 pub(crate) trait MetadataExt {
     fn target_dir(&self) -> Cow<Utf8Path>;
-    fn uniffi_crates(&self) -> Vec<&Package>;
     fn current_crate(&self) -> Option<&Package>;
 }
 
@@ -35,20 +34,6 @@ impl MetadataExt for Metadata {
             Ok(relative) => Cow::from(relative),
             Err(_) => Cow::from(target_dir),
         }
-    }
-
-    /// Returns the package metadata for all crates that depend on UniFFI and are below, at or above the current working directory.
-    fn uniffi_crates(&self) -> Vec<&Package> {
-        let cwd = std::env::current_dir().unwrap();
-        // TODO: also include crates that are above the current working directory
-        let crates: Vec<_> = self
-            .workspace_packages()
-            .into_iter()
-            .filter(|package| package.manifest_path.starts_with(&cwd))
-            // TODO: Filter out the crates that depend on UniFFI
-            .collect();
-
-        crates
     }
 
     /// Returns the package metadata for the crate currently at or above the current working directory.

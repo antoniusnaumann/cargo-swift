@@ -5,7 +5,7 @@ use std::{
 
 use crate::Result;
 use camino::Utf8Path;
-use uniffi_bindgen::{bindings::TargetLanguage, BindingGeneratorDefault};
+use uniffi_bindgen::bindings::SwiftBindingGenerator;
 
 use crate::recreate_dir;
 
@@ -22,10 +22,7 @@ pub fn generate_bindings(lib_path: &Utf8Path) -> Result<()> {
     let uniffi_outputs = uniffi_bindgen::library_mode::generate_bindings(
         lib_path,
         None,
-        &BindingGeneratorDefault {
-            target_languages: vec![TargetLanguage::Swift],
-            try_format_code: false,
-        },
+        &SwiftBindingGenerator {},
         None,
         out_dir,
         false,
@@ -37,7 +34,7 @@ pub fn generate_bindings(lib_path: &Utf8Path) -> Result<()> {
         .open(headers.join("module.modulemap"))?;
 
     for output in uniffi_outputs {
-        let crate_name = output.crate_name;
+        let crate_name = output.ci.crate_name();
         fs::copy(
             out_dir.join(format!("{crate_name}.swift")),
             sources.join(format!("{crate_name}.swift")),
