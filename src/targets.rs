@@ -191,6 +191,8 @@ pub enum ApplePlatform {
     WatchOSSimulator,
     CarPlayOS,
     CarPlayOSSimulator,
+    VisionOS,
+    VisionOSSimulator,
 }
 
 impl TargetInfo for ApplePlatform {
@@ -232,7 +234,9 @@ impl TargetInfo for ApplePlatform {
             CarPlayOS => unimplemented!("No official Rust target for platform \"CarPlay\"!"),
             CarPlayOSSimulator => {
                 unimplemented!("No official Rust target for platform \"CarPlay Simulator\"!")
-            }
+            },
+            VisionOS => unimplemented!(),
+            VisionOSSimulator => unimplemented!(),
         }
     }
 }
