@@ -62,7 +62,14 @@ enum Action {
         // Initialize the project without any explanatory boilerplate code
         plain: bool,
 
+        #[arg(long = "udl")]
+        // Use .udl files instead of macros to declare which types and functions should be exported
+        // for use in Swift
+        udl: bool,
+
         #[arg(long = "macro")]
+        // (Deprecated) This flag is no longer neccessary, as this is the default mode. This flag
+        // is ignored now and will be removed in future releases 
         // Initialize the project as a macro-only crate without .udl files
         macro_only: bool,
     },
@@ -117,8 +124,9 @@ fn main() -> ExitCode {
             vcs,
             lib_type,
             plain,
-            macro_only,
-        } => init::run(crate_name, config, vcs, lib_type, plain, macro_only),
+            macro_only: _,
+            udl
+        } => init::run(crate_name, config, vcs, lib_type, plain, !udl),
 
         Action::Package {
             platforms,
