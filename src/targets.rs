@@ -66,6 +66,8 @@ impl Target {
                     cmd.arg("--no-default-features");
                 }
 
+                // TODO: Add build-std here for experimental targets (= tier 3 targets)
+
                 cmd
             })
             .collect()
@@ -185,12 +187,11 @@ pub enum ApplePlatform {
     IOS,
     IOSSimulator,
     MacOS,
-    MacCatalyst,
+    // MacCatalyst,
     TvOS,
+    TvOSSimulator,
     WatchOS,
     WatchOSSimulator,
-    CarPlayOS,
-    CarPlayOSSimulator,
     VisionOS,
     VisionOSSimulator,
 }
@@ -216,27 +217,43 @@ impl TargetInfo for ApplePlatform {
                 display_name: "macOS",
                 platform: *self,
             },
-            MacCatalyst => {
-                unimplemented!("No official Rust target for platform \"Mac Catalyst\"!")
-            }
-            TvOS => Target::Universal {
-                universal_name: "universal-tvos",
-                architectures: nonempty!["aarch64-apple-tvos", "x86_64-apple-tvos"],
+            TvOS => Target::Single {
+                architecture: "aarch64-apple-tvos",
                 display_name: "tvOS",
                 platform: *self,
             },
-            WatchOS => {
-                unimplemented!("No official Rust target for platform \"watchOS\"!")
-            }
-            WatchOSSimulator => {
-                unimplemented!("No official Rust target for platform \"watchOS Simulator\"!")
-            }
-            CarPlayOS => unimplemented!("No official Rust target for platform \"CarPlay\"!"),
-            CarPlayOSSimulator => {
-                unimplemented!("No official Rust target for platform \"CarPlay Simulator\"!")
+            TvOSSimulator => Target::Universal {
+                universal_name: "universal-tvos-simulator",
+                architectures: nonempty!["aarch64-apple-tvos-sim", "x86_64-apple-tvos"],
+                display_name: "tvOS Simulator",
+                platform: *self,
             },
-            VisionOS => unimplemented!(),
-            VisionOSSimulator => unimplemented!(),
+            WatchOS => Target::Universal {
+                universal_name: "universal-watchos",
+                architectures: nonempty![
+                    "aarch64-apple-watchos",
+                    "arm64_32-apple-watchos",
+                    "armv7k-apple-watchos"
+                ],
+                display_name: "watchOS",
+                platform: *self,
+            },
+            WatchOSSimulator => Target::Universal {
+                universal_name: "universal-watchos-sim",
+                architectures: nonempty!["aarch64-apple-watchos-sim", "x86_64-apple-watchos-sim"],
+                display_name: "watchOS Simulator",
+                platform: *self,
+            },
+            VisionOS => Target::Single {
+                architecture: "aarch64-apple-visionos",
+                display_name: "visionOS",
+                platform: *self,
+            },
+            VisionOSSimulator => Target::Single {
+                architecture: "aarch64-apple-visionos-sim",
+                display_name: "visionOS Simulator",
+                platform: *self,
+            },
         }
     }
 }

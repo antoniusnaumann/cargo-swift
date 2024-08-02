@@ -201,6 +201,7 @@ pub enum Platform {
     // Platforms below are removed until they are appropriately supported
     //    Tvos,
     //    Watchos,
+    //    Visionos,
 }
 
 impl Platform {
