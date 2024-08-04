@@ -294,6 +294,7 @@ fn check_installed_toolchains(targets: &[Target]) -> Vec<&'static str> {
 
     targets
         .iter()
+        .filter(|t| !t.platform().is_tier_3())
         .flat_map(|t| t.architectures())
         .filter(|arch| {
             !installed
