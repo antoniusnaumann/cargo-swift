@@ -162,9 +162,17 @@ fn run_for_crate(
 
     if !skip_toolchains_check {
         let missing_toolchains = check_installed_toolchains(&targets);
-        if !missing_toolchains.is_empty() {
-            if config.accept_all || prompt_toolchain_installation(&missing_toolchains) {
+        let nightly_toolchains = check_nightly_installed(&targets);
+
+        let installation_required =
+            &[missing_toolchains.as_slice(), nightly_toolchains.as_slice()].concat();
+
+        if !installation_required.is_empty() {
+            if config.accept_all || prompt_toolchain_installation(installation_required) {
                 install_toolchains(&missing_toolchains, config.silent)?;
+                if !nightly_toolchains.is_empty() {
+                    install_nightly_src(config.silent)?;
+                }
             } else {
                 Err("Toolchains for some target platforms were missing!")?;
             }
@@ -304,6 +312,32 @@ fn check_installed_toolchains(targets: &[Target]) -> Vec<&'static str> {
         .collect()
 }
 
+/// Checks if rust-src component for tier 3 targets are installed
+fn check_nightly_installed(targets: &[Target]) -> Vec<&'static str> {
+    if !targets.iter().any(|t| t.platform().is_tier_3()) {
+        return vec![];
+    }
+
+    let mut rustup = command("rustup component list --toolchain nightly");
+    rustup.stdout(Stdio::piped());
+
+    let output = rustup
+        .execute_output()
+        .expect("Failed to check installed components. Is rustup installed on your system?");
+    let output = String::from_utf8_lossy(&output.stdout);
+
+    if output
+        .split('\n')
+        .filter(|s| s.contains("installed"))
+        .map(|s| s.replace("(installed)", "").trim().to_owned())
+        .any(|s| s.eq_ignore_ascii_case("rust-src"))
+    {
+        vec![]
+    } else {
+        vec!["rust-src"]
+    }
+}
+
 /// Prompts the user to install the given **toolchains** by name
 fn prompt_toolchain_installation(toolchains: &[&str]) -> bool {
     println!("The following toolchains are not installed:");
@@ -326,6 +360,10 @@ fn prompt_toolchain_installation(toolchains: &[&str]) -> bool {
 
 /// Attempts to install the given **toolchains**
 fn install_toolchains(toolchains: &[&str], silent: bool) -> Result<()> {
+    if toolchains.is_empty() {
+        return Ok(());
+    };
+
     let multi = silent.not().then(MultiProgress::new);
     let spinner = silent
         .not()
@@ -344,10 +382,36 @@ fn install_toolchains(toolchains: &[&str], silent: bool) -> Result<()> {
         // TODO: make this a separate function and show error spinner on fail
         install
             .execute()
-            .map_err(|e| format!("Error while donwloading toolchain {toolchain}: \n\t{e}"))?;
+            .map_err(|e| format!("Error while downloading toolchain {toolchain}: \n\t{e}"))?;
 
         step.finish();
     }
+    spinner.finish();
+
+    Ok(())
+}
+
+/// Attempts to install the "rust-src" component on nightly
+fn install_nightly_src(silent: bool) -> Result<()> {
+    let multi = silent.not().then(MultiProgress::new);
+    let spinner = silent
+        .not()
+        .then(|| MainSpinner::with_message("Installing Toolchains...".to_owned()));
+    multi.add(&spinner);
+    spinner.start();
+    let mut install = command("rustup component add rust-src --toolchain nightly");
+    install.stdin(Stdio::null());
+
+    let step = silent.not().then(|| CommandSpinner::with_command(&install));
+    multi.add(&step);
+    step.start();
+
+    // TODO: make this a separate function and show error spinner on fail
+    install
+        .execute()
+        .map_err(|e| format!("Error while installing rust-src on nightly: \n\t{e}"))?;
+
+    step.finish();
     spinner.finish();
 
     Ok(())
