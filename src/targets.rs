@@ -9,6 +9,10 @@ use crate::package::FeatureOptions;
 
 pub trait TargetInfo {
     fn target(&self) -> Target;
+    /// Marks whether a pre-built std-lib is provided for this target (Tier 1 and Tier 2) via rustup or target needs to
+    /// be build (Tier 3)
+    /// See: https://doc.rust-lang.org/nightly/rustc/platform-support.html
+    fn is_tier_3(&self) -> bool;
 }
 
 #[derive(Debug, Clone)]
@@ -46,7 +50,8 @@ impl Target {
         self.architectures()
             .into_iter()
             .map(|arch| {
-                let mut cmd = command("cargo build");
+                // FIXME: Remove nightly for Tier 3 targets here once build-std is stabilized
+                let mut cmd = if self.is_tier_3() { command("cargo +nightly build -Z build-std") } else { command("cargo build") };
                 cmd.arg("--target").arg(arch);
 
                 match mode {
@@ -65,8 +70,6 @@ impl Target {
                 if features.no_default_features {
                     cmd.arg("--no-default-features");
                 }
-
-                // TODO: Add build-std here for experimental targets (= tier 3 targets)
 
                 cmd
             })
@@ -176,6 +179,10 @@ impl Target {
             library_file_name(lib_name, lib_type)
         )
     }
+
+    fn is_tier_3(&self) -> bool {
+        self.platform().is_tier_3()
+    }
 }
 
 pub fn library_file_name(lib_name: &str, lib_type: LibType) -> String {
@@ -254,6 +261,16 @@ impl TargetInfo for ApplePlatform {
                 display_name: "visionOS Simulator",
                 platform: *self,
             },
+        }
+    }
+
+    fn is_tier_3(&self) -> bool {
+        match self {
+            ApplePlatform::IOS | ApplePlatform::IOSSimulator => false,
+            ApplePlatform::MacOS => false,
+            ApplePlatform::TvOS | ApplePlatform::TvOSSimulator => true,
+            ApplePlatform::WatchOS | ApplePlatform::WatchOSSimulator => true,
+            ApplePlatform::VisionOS | ApplePlatform::VisionOSSimulator => true,
         }
     }
 }
