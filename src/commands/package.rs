@@ -193,15 +193,18 @@ fn run_for_crate(
     Ok(())
 }
 
+// FIXME: This can be removed once variant_count is stabilized: https://doc.rust-lang.org/std/mem/fn.variant_count.html#:~:text=Function%20std%3A%3Amem%3A%3Avariant_count&text=Returns%20the%20number%20of%20variants,the%20return%20value%20is%20unspecified.
+const PLATFORM_COUNT: usize = 5;
+
 #[derive(ValueEnum, Copy, Clone, Debug)]
 #[value()]
 pub enum Platform {
     Macos,
     Ios,
-    // Platforms below are removed until they are appropriately supported
-    //    Tvos,
-    //    Watchos,
-    //    Visionos,
+    // Platforms below are experimental
+    Tvos,
+    Watchos,
+    Visionos,
 }
 
 impl Platform {
@@ -209,36 +212,55 @@ impl Platform {
         match self {
             Platform::Macos => vec![ApplePlatform::MacOS],
             Platform::Ios => vec![ApplePlatform::IOS, ApplePlatform::IOSSimulator],
-            //            Platform::Tvos => vec![ApplePlatform::TvOS],
-            //            Platform::Watchos => vec![ApplePlatform::WatchOS],
+            Platform::Tvos => vec![ApplePlatform::TvOS, ApplePlatform::TvOSSimulator],
+            Platform::Watchos => vec![ApplePlatform::WatchOS, ApplePlatform::WatchOSSimulator],
+            Platform::Visionos => vec![ApplePlatform::VisionOS, ApplePlatform::VisionOSSimulator],
         }
     }
 
-    fn display_name(&self) -> &'static str {
-        match self {
+    fn display_name(&self) -> String {
+        let name = match self {
             Platform::Macos => "macOS",
             Platform::Ios => "iOS",
-            //            Platform::Tvos => "tvOS",
-            //            Platform::Watchos => "watchOS",
+            Platform::Tvos => "tvOS",
+            Platform::Watchos => "watchOS",
+            Platform::Visionos => "visionOS",
+        };
+
+        format!(
+            "{name}{}",
+            if self.is_experimental() {
+                " (Experimental)"
+            } else {
+                ""
+            }
+        )
+    }
+
+    fn is_experimental(&self) -> bool {
+        match self {
+            Platform::Macos | Platform::Ios => false,
+            Platform::Tvos | Platform::Watchos | Platform::Visionos => true,
         }
     }
 
-    fn all() -> Vec<Self> {
-        vec![
+    fn all() -> [Self; PLATFORM_COUNT] {
+        [
             Self::Macos,
             Self::Ios,
-            //    Self::Tvos,
-            //    Self::Watchos
+            Self::Tvos,
+            Self::Watchos,
+            Self::Visionos,
         ]
     }
 }
 
 fn prompt_platforms(accept_all: bool) -> Vec<Platform> {
     let platforms = Platform::all();
-    let items: Vec<_> = platforms.iter().map(|p| p.display_name()).collect();
+    let items = platforms.map(|p| p.display_name());
 
     if accept_all {
-        return platforms;
+        return platforms.to_vec();
     }
 
     let theme = prompt_theme();
@@ -247,7 +269,7 @@ fn prompt_platforms(accept_all: bool) -> Vec<Platform> {
         .with_prompt("Select Target Platforms")
         // TODO: Move this to separate class and disable reporting to change style on success
         // .report(false)
-        .defaults(&[true, true, true, false]);
+        .defaults(&platforms.map(|p| !p.is_experimental()));
 
     let chosen: Vec<usize> = selector.interact().unwrap();
 
