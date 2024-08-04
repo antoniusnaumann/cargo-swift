@@ -318,8 +318,11 @@ fn check_nightly_installed(targets: &[Target]) -> Vec<&'static str> {
         return vec![];
     }
 
+    // TODO: Check if the correct nightly toolchain itself is installed
     let mut rustup = command("rustup component list --toolchain nightly");
     rustup.stdout(Stdio::piped());
+    // HACK: Silence error that toolchain is not installed
+    rustup.stderr(Stdio::null());
 
     let output = rustup
         .execute_output()
@@ -334,7 +337,7 @@ fn check_nightly_installed(targets: &[Target]) -> Vec<&'static str> {
     {
         vec![]
     } else {
-        vec!["rust-src"]
+        vec!["rust-src (nightly)"]
     }
 }
 
@@ -399,6 +402,21 @@ fn install_nightly_src(silent: bool) -> Result<()> {
         .then(|| MainSpinner::with_message("Installing Toolchains...".to_owned()));
     multi.add(&spinner);
     spinner.start();
+
+    let mut install = command("rustup toolchain install nightly");
+    install.stdin(Stdio::null());
+
+    let step = silent.not().then(|| CommandSpinner::with_command(&install));
+    multi.add(&step);
+    step.start();
+
+    // TODO: make this a separate function and show error spinner on fail
+    install
+        .execute()
+        .map_err(|e| format!("Error while installing rust-src on nightly: \n\t{e}"))?;
+
+    step.finish();
+
     let mut install = command("rustup component add rust-src --toolchain nightly");
     install.stdin(Stdio::null());
 
