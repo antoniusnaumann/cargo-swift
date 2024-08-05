@@ -9,6 +9,10 @@ use crate::package::FeatureOptions;
 
 pub trait TargetInfo {
     fn target(&self) -> Target;
+    /// Marks whether a pre-built std-lib is provided for this target (Tier 1 and Tier 2) via rustup or target needs to
+    /// be build (Tier 3)
+    /// See: https://doc.rust-lang.org/nightly/rustc/platform-support.html
+    fn is_tier_3(&self) -> bool;
 }
 
 #[derive(Debug, Clone)]
@@ -46,7 +50,8 @@ impl Target {
         self.architectures()
             .into_iter()
             .map(|arch| {
-                let mut cmd = command("cargo build");
+                // FIXME: Remove nightly for Tier 3 targets here once build-std is stabilized
+                let mut cmd = if self.platform().is_tier_3() { command("cargo +nightly build -Z build-std") } else { command("cargo build") };
                 cmd.arg("--target").arg(arch);
 
                 match mode {
@@ -185,12 +190,13 @@ pub enum ApplePlatform {
     IOS,
     IOSSimulator,
     MacOS,
-    MacCatalyst,
+    // MacCatalyst,
     TvOS,
+    TvOSSimulator,
     WatchOS,
     WatchOSSimulator,
-    CarPlayOS,
-    CarPlayOSSimulator,
+    VisionOS,
+    VisionOSSimulator,
 }
 
 impl TargetInfo for ApplePlatform {
@@ -214,25 +220,53 @@ impl TargetInfo for ApplePlatform {
                 display_name: "macOS",
                 platform: *self,
             },
-            MacCatalyst => {
-                unimplemented!("No official Rust target for platform \"Mac Catalyst\"!")
-            }
-            TvOS => Target::Universal {
-                universal_name: "universal-tvos",
-                architectures: nonempty!["aarch64-apple-tvos", "x86_64-apple-tvos"],
+            TvOS => Target::Single {
+                architecture: "aarch64-apple-tvos",
                 display_name: "tvOS",
                 platform: *self,
             },
-            WatchOS => {
-                unimplemented!("No official Rust target for platform \"watchOS\"!")
-            }
-            WatchOSSimulator => {
-                unimplemented!("No official Rust target for platform \"watchOS Simulator\"!")
-            }
-            CarPlayOS => unimplemented!("No official Rust target for platform \"CarPlay\"!"),
-            CarPlayOSSimulator => {
-                unimplemented!("No official Rust target for platform \"CarPlay Simulator\"!")
-            }
+            TvOSSimulator => Target::Universal {
+                universal_name: "universal-tvos-simulator",
+                architectures: nonempty!["aarch64-apple-tvos-sim", "x86_64-apple-tvos"],
+                display_name: "tvOS Simulator",
+                platform: *self,
+            },
+            WatchOS => Target::Universal {
+                universal_name: "universal-watchos",
+                architectures: nonempty![
+                    "aarch64-apple-watchos",
+                    "arm64_32-apple-watchos",
+                    "armv7k-apple-watchos"
+                ],
+                display_name: "watchOS",
+                platform: *self,
+            },
+            WatchOSSimulator => Target::Universal {
+                universal_name: "universal-watchos-sim",
+                architectures: nonempty!["aarch64-apple-watchos-sim", "x86_64-apple-watchos-sim"],
+                display_name: "watchOS Simulator",
+                platform: *self,
+            },
+            VisionOS => Target::Single {
+                architecture: "aarch64-apple-visionos",
+                display_name: "visionOS",
+                platform: *self,
+            },
+            VisionOSSimulator => Target::Single {
+                architecture: "aarch64-apple-visionos-sim",
+                display_name: "visionOS Simulator",
+                platform: *self,
+            },
+        }
+    }
+
+    fn is_tier_3(&self) -> bool {
+        match self {
+            ApplePlatform::IOS | ApplePlatform::IOSSimulator => false,
+            ApplePlatform::MacOS => false,
+            ApplePlatform::TvOS | ApplePlatform::TvOSSimulator => true,
+            ApplePlatform::WatchOS | ApplePlatform::WatchOSSimulator => true,
+            ApplePlatform::VisionOS | ApplePlatform::VisionOSSimulator => true,
         }
     }
 }
