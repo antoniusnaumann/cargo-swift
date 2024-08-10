@@ -58,6 +58,7 @@ pub struct FeatureOptions {
 #[allow(clippy::too_many_arguments)]
 pub fn run(
     platforms: Option<Vec<Platform>>,
+    build_target: Option<&str>,
     package_name: Option<String>,
     xcframework_name: String,
     disable_warnings: bool,
@@ -77,6 +78,7 @@ pub fn run(
         return run_for_crate(
             crates[0],
             platforms.clone(),
+            build_target,
             package_name,
             xcframework_name,
             disable_warnings,
@@ -97,6 +99,7 @@ pub fn run(
             run_for_crate(
                 current_crate,
                 platforms.clone(),
+                build_target,
                 None,
                 xcframework_name.clone(),
                 disable_warnings,
@@ -116,6 +119,7 @@ pub fn run(
 fn run_for_crate(
     current_crate: &Package,
     platforms: Option<Vec<Platform>>,
+    build_target: Option<&str>,
     package_name: Option<String>,
     xcframework_name: String,
     disable_warnings: bool,
@@ -154,11 +158,39 @@ fn run_for_crate(
         Err("At least 1 platform needs to be selected!")?;
     }
 
-    let targets: Vec<_> = platforms
+    let mut targets: Vec<_> = platforms
         .into_iter()
         .flat_map(|p| p.into_apple_platforms())
         .map(|p| p.target())
         .collect();
+
+    if let Some(build_target) = build_target {
+        targets.retain_mut(|platform_target| match platform_target {
+            Target::Single { architecture, .. } => *architecture == build_target,
+            Target::Universal {
+                architectures,
+                display_name,
+                platform,
+                ..
+            } => {
+                let Some(architecture) = architectures.iter().find(|t| **t == build_target) else {
+                    return false;
+                };
+                *platform_target = Target::Single {
+                    architecture,
+                    display_name,
+                    platform: *platform,
+                };
+                true
+            }
+        });
+        if targets.is_empty() {
+            return Err(Error::from(format!(
+                "No matching build target for {}",
+                build_target
+            )));
+        }
+    }
 
     if !skip_toolchains_check {
         let missing_toolchains = check_installed_toolchains(&targets);
