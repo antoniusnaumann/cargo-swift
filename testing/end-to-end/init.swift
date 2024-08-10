@@ -47,37 +47,38 @@ guard fileExists(atPath: "\(projectName)/src/lib.rs") else {
 print("Running tests for cargo swift init in udl mode...")
 
 let cargoSwiftInitUdl = Process()
-cargoSwiftInit.executableURL = URL(fileURLWithPath: "/usr/bin/env")
-cargoSwiftInit.arguments = ["cargo", "swift", "init", projectName, "-y", "--silent", "--udl"]
+let projectNameUdl = "\(projectName)_udl"
+cargoSwiftInitUdl.executableURL = URL(fileURLWithPath: "/usr/bin/env")
+cargoSwiftInitUdl.arguments = ["cargo", "swift", "init", projectNameUdl, "-y", "--silent", "--udl"]
 
 try! cargoSwiftInitUdl.run()
 cargoSwiftInitUdl.waitUntilExit()
 
-guard dirExists(atPath: projectName) else {
+guard dirExists(atPath: projectNameUdl) else {
 	error("Project directory does not exist")
 	exit(1) 
 }
-guard fileExists(atPath: "\(projectName)/Cargo.toml") else { 
+guard fileExists(atPath: "\(projectNameUdl)/Cargo.toml") else { 
 	error("No Cargo.toml found in project directory")
 	exit(1)
 }
-guard fileExists(atPath: "\(projectName)/build.rs") else { 
+guard fileExists(atPath: "\(projectNameUdl)/build.rs") else { 
 	error("No build.rs file found in project directory")
 	exit(1)
 }
-guard fileExists(atPath: "\(projectName)/.gitignore") else { 
+guard fileExists(atPath: "\(projectNameUdl)/.gitignore") else { 
 	error("No .gitignore found in project directory")
 	exit(1)
 }
-guard dirExists(atPath: "\(projectName)/src") else { 
+guard dirExists(atPath: "\(projectNameUdl)/src") else { 
 	error("No src-directory found in project directory")
 	exit(1)
 }
-guard fileExists(atPath: "\(projectName)/src/lib.rs") else { 
+guard fileExists(atPath: "\(projectNameUdl)/src/lib.rs") else { 
 	error("No lib.rs file found in src directory")
 	exit(1)
 }
-guard fileExists(atPath: "\(projectName)/src/lib.udl") else { 
+guard fileExists(atPath: "\(projectNameUdl)/src/lib.udl") else { 
 	error("No lib.udl file found in src directory")
 	exit(1)
 }
