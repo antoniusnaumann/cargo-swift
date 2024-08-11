@@ -74,6 +74,10 @@ enum Action {
         #[arg(short, long, trailing_var_arg = true, num_args = 1..=4, ignore_case = true)]
         platforms: Option<Vec<package::Platform>>,
 
+        #[arg(long)]
+        /// Build package for the specified target triplet only.
+        target: Option<String>,
+
         #[arg(short = 'n', long = "name")]
         package_name: Option<String>,
 
@@ -122,6 +126,7 @@ fn main() -> ExitCode {
 
         Action::Package {
             platforms,
+            target,
             package_name,
             xcframework_name,
             suppress_warnings,
@@ -133,6 +138,7 @@ fn main() -> ExitCode {
             no_default_features,
         } => package::run(
             platforms,
+            target.as_deref(),
             package_name,
             xcframework_name,
             suppress_warnings,
