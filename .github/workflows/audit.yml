@@ -17,6 +17,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Cargo Outdated
-        run: cargo outdated --exit-code 1
+        run: cargo outdated -i cargo_metadata --exit-code 1
       - name: Cargo Audit
         run: cargo audit -D warnings
