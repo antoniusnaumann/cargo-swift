@@ -3,9 +3,9 @@ use std::{
     io,
 };
 
-use crate::Result;
+use crate::{metadata::metadata, Result};
 use camino::Utf8Path;
-use uniffi_bindgen::bindings::SwiftBindingGenerator;
+use uniffi_bindgen::{bindings::SwiftBindingGenerator, cargo_metadata::CrateConfigSupplier};
 
 use crate::recreate_dir;
 
@@ -23,6 +23,7 @@ pub fn generate_bindings(lib_path: &Utf8Path) -> Result<()> {
         lib_path,
         None,
         &SwiftBindingGenerator {},
+        &CrateConfigSupplier::from(metadata().clone()),
         None,
         out_dir,
         false,
