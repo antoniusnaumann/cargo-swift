@@ -60,7 +60,7 @@ pub fn run(
     platforms: Option<Vec<Platform>>,
     build_target: Option<&str>,
     package_name: Option<String>,
-    xcframework_name: String,
+    xcframework_name: Option<String>,
     disable_warnings: bool,
     config: Config,
     mode: Mode,
@@ -101,7 +101,7 @@ pub fn run(
                 platforms.clone(),
                 build_target,
                 None,
-                xcframework_name.clone(),
+                None,
                 disable_warnings,
                 &config,
                 mode,
@@ -121,7 +121,7 @@ fn run_for_crate(
     platforms: Option<Vec<Platform>>,
     build_target: Option<&str>,
     package_name: Option<String>,
-    xcframework_name: String,
+    xcframework_name: Option<String>,
     disable_warnings: bool,
     config: &Config,
     mode: Mode,
@@ -149,8 +149,12 @@ fn run_for_crate(
     }
 
     let crate_name = current_crate.name.to_lowercase();
-    let package_name =
-        package_name.unwrap_or_else(|| prompt_package_name(&crate_name, config.accept_all));
+    let package_name = package_name.unwrap_or_else(|| prompt_package_name(&crate_name, config.accept_all));
+    let xcframework_name = xcframework_name.unwrap_or_else(|| prompt_xcframework_name(&crate_name, config.accept_all));
+
+    if package_name == xcframework_name {
+        Err("Package name and XCFramework name must be different to avoid duplicate target names in XCode!")?;
+    }
 
     let platforms = platforms.unwrap_or_else(|| prompt_platforms(config.accept_all));
 
@@ -477,6 +481,22 @@ fn prompt_package_name(crate_name: &str, accept_all: bool) -> String {
     let theme = prompt_theme();
     Input::with_theme(&theme)
         .with_prompt("Swift Package Name")
+        .default(default)
+        .interact_text()
+        .unwrap()
+}
+
+fn prompt_xcframework_name(crate_name: &str, accept_all: bool) -> String {
+    let crate_name = format!("{}XCFramework", crate_name);
+    let default = crate_name.to_case(Case::UpperCamel);
+
+    if accept_all {
+        return default;
+    }
+
+    let theme = prompt_theme();
+    Input::with_theme(&theme)
+        .with_prompt("XCFramework Name")
         .default(default)
         .interact_text()
         .unwrap()
