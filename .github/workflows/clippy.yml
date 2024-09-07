@@ -16,4 +16,4 @@ jobs:
     - uses: actions/checkout@v4
     - uses: olix0r/cargo-action-fmt/setup@v2
     - name: Clippy
-      run: cargo clippy -q -- -D warnings --message-format=json | cargo-action-fmt
+      run: set -o pipefail && cargo clippy -q --message-format=json -- -D warnings | cargo-action-fmt

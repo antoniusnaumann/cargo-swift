@@ -16,7 +16,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: olix0r/cargo-action-fmt/setup@v2
       - name: Check
-        run: cargo check -q --message-format=json | cargo-action-fmt
+        run: set -o pipefail && cargo check -q --message-format=json | cargo-action-fmt
       - name: Build
         run: cargo build
       - name: Test
