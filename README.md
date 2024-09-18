@@ -56,7 +56,7 @@ To bundle the previously created Rust library as Swift Package, run:
 ```
 cargo swift package
 ```
-This command interactively prompts you for swift package name and target platforms.
+This command interactively prompts you for swift package name, xcframework name, and target platforms.
 If some required toolchains for the selected target platforms are missing, cargo swift will ask you if it should install them automatically.
 
 That's it! You can now include the created package in an iOS or macOS app via Swift Package Manager.
