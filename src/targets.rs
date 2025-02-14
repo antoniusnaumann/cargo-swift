@@ -51,7 +51,11 @@ impl Target {
             .into_iter()
             .map(|arch| {
                 // FIXME: Remove nightly for Tier 3 targets here once build-std is stabilized
-                let mut cmd = if self.platform().is_tier_3() { command("cargo +nightly build -Z build-std") } else { command("cargo build") };
+                let mut cmd = if self.platform().is_tier_3() {
+                    command("cargo +nightly build -Z build-std")
+                } else {
+                    command("cargo build")
+                };
                 cmd.arg("--target").arg(arch);
 
                 match mode {

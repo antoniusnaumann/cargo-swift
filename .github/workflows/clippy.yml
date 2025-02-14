@@ -14,5 +14,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
+    - uses: olix0r/cargo-action-fmt/setup@v2
     - name: Clippy
-      run: cargo clippy -vv -- -D warnings
+      run: set -o pipefail && cargo clippy -q --message-format=json -- -D warnings | cargo-action-fmt

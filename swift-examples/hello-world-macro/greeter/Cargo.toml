@@ -10,4 +10,5 @@ crate-type = ["cdylib", "staticlib", "lib"]
 name = "greeter"
 
 [dependencies]
-uniffi = "0.28"
+uniffi = "0.29"
+
