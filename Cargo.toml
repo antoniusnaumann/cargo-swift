@@ -17,29 +17,29 @@ categories = [
 exclude = ["/readme", "/.github", "/testing", "/swift-examples", "*-DRAFT.md"]
 
 [dependencies]
-camino = "1.1.7"
+camino = "1.1.9"
 cargo_metadata = "0.15.4"
-clap = { version = "4.5.11", features = ["derive"] }
+clap = { version = "4.5.29", features = ["derive"] }
 convert_case = "0.6.0"
-glob = "0.3.1"
+glob = "0.3.2"
 nonempty = "0.10.0"
-serde = { version = "1.0.204", features = ["derive"] }
+serde = { version = "1.0.217", features = ["derive"] }
 
 # Templating
 askama = "0.12.1"
 
 # Terminal UI
-console = "0.15.8"
+console = "0.15.10"
 dialoguer = { version = "0.11.0", default-features = false }
 execute = "0.2.13"
-indicatif = "0.17.8"
+indicatif = "0.17.11"
 
 # FFI Bindings
 uniffi_bindgen = { version = "=0.29.0" }
 
 # Error Handling
-anyhow = "1.0.86"
-thiserror = "1.0.63"
+anyhow = "1.0.95"
+thiserror = "1.0.69"
 lazy_static = "1.5.0"
 itertools = "0.13.0"
 
