@@ -13,7 +13,7 @@ jobs:
   tests:
     strategy:
       matrix:
-        os: [macos-latest, macos-12, macos-13, macos-14]
+        os: [macos-latest, macos-13, macos-14]
         test: [init, package]
     runs-on: ${{ matrix.os }}
     steps:
