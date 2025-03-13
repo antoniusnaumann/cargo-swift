@@ -300,7 +300,10 @@ fn prompt_platforms(accept_all: bool) -> Vec<Platform> {
     let items = platforms.map(|p| p.display_name());
 
     if accept_all {
-        return platforms.to_vec();
+        return platforms
+            .into_iter()
+            .filter(|p| !p.is_experimental())
+            .collect();
     }
 
     let theme = prompt_theme();
