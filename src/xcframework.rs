@@ -8,19 +8,17 @@ use std::process::{Command, Stdio};
 
 pub fn search_subframework_paths(output_dir: &Path) -> Result<Vec<PathBuf>> {
     let mut xcf_path: Option<DirEntry> = None;
-    for sub_dir in std::fs::read_dir(output_dir)? {
-        if let Ok(dir) = sub_dir {
-            if dir
-                .file_name()
-                .to_str()
-                .ok_or(anyhow!(
-                    "The directory that is being checked if it is an XCFramework has an invalid name!"
-                ))?
-                .contains(".xcframework")
-            {
-                xcf_path = Some(dir)
-            }
-        };
+    for sub_dir in std::fs::read_dir(output_dir)?.flatten() {
+        if sub_dir
+            .file_name()
+            .to_str()
+            .ok_or(anyhow!(
+                "The directory that is being checked if it is an XCFramework has an invalid name!"
+            ))?
+            .contains(".xcframework")
+        {
+            xcf_path = Some(sub_dir)
+        }
     }
     let mut subframework_paths = Vec::<PathBuf>::new();
     if let Some(path) = xcf_path {
@@ -40,18 +38,18 @@ pub fn search_subframework_paths(output_dir: &Path) -> Result<Vec<PathBuf>> {
 }
 
 pub fn patch_subframework(
-    sf_dir: &PathBuf,
+    sf_dir: &Path,
     generated_dir: &Path,
     xcframework_name: &str,
 ) -> Result<()> {
-    let mut headers = sf_dir.clone();
+    let mut headers = sf_dir.to_owned();
     headers.push("headers");
     remove_dir_all(&headers)
         .with_context(|| format!("Failed to remove unpatched directory {headers:?}"))?;
     let mut generated_headers = generated_dir.to_owned();
     generated_headers.push("headers");
 
-    let mut patched_headers = sf_dir.clone();
+    let mut patched_headers = sf_dir.to_owned();
     patched_headers.push("headers");
     patched_headers.push(xcframework_name);
     std::fs::create_dir_all(&patched_headers)
@@ -68,7 +66,7 @@ pub fn patch_subframework(
     for path in gen_header_files {
         let filename = path
             .components()
-            .last()
+            .next_back()
             .ok_or(anyhow!("Expected source filename when copying"))?;
         patched_headers.push(filename);
         std::fs::copy(&path, &patched_headers).with_context(|| {
