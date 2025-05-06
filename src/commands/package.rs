@@ -4,7 +4,7 @@ use std::path::PathBuf;
 use std::process::{Command, Stdio};
 
 use camino::Utf8PathBuf;
-use cargo_metadata::Package;
+use cargo_metadata::{Package, TargetKind};
 use clap::ValueEnum;
 use convert_case::{Case, Casing};
 use dialoguer::{Input, MultiSelect};
@@ -132,12 +132,12 @@ fn run_for_crate(
     let lib = current_crate
         .targets
         .iter()
-        .find(|t| t.kind.contains(&"lib".to_owned()))
+        .find(|t| t.kind.contains(&TargetKind::Lib))
         .ok_or("No library tag defined in Cargo.toml!")?;
     let lib_types = lib
         .crate_types
         .iter()
-        .filter_map(|t| t.parse().ok())
+        .filter_map(|t| t.clone().try_into().ok())
         .collect::<Vec<_>>();
     let lib_type = pick_lib_type(&lib_types, lib_type_arg.clone().into(), config)?;
 
