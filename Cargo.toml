@@ -8,11 +8,11 @@ license = "MIT OR Apache-2.0"
 repository = "https://github.com/antoniusnaumann/cargo-swift"
 keywords = ["macos", "ios", "uniffi", "spm", "swift"]
 categories = [
-  "command-line-utilities",
-  "development-tools",
-  "development-tools::build-utils",
-  "development-tools::cargo-plugins",
-  "development-tools::ffi",
+    "command-line-utilities",
+    "development-tools",
+    "development-tools::build-utils",
+    "development-tools::cargo-plugins",
+    "development-tools::ffi",
 ]
 exclude = ["/readme", "/.github", "/testing", "/swift-examples", "*-DRAFT.md"]
 
@@ -26,7 +26,7 @@ nonempty = "0.10.0"
 serde = { version = "1.0.219", features = ["derive"] }
 
 # Templating
-askama = "0.12.1"
+askama = "0.13.1"
 
 # Terminal UI
 console = "0.15.11"
