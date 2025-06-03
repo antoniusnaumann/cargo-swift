@@ -1,5 +1,6 @@
 use std::{fmt::Display, str::FromStr};
 
+use cargo_metadata::CrateType;
 use clap::ValueEnum;
 use thiserror::Error;
 
@@ -32,6 +33,18 @@ impl Display for LibType {
         match self {
             Self::Static => write!(f, "static"),
             Self::Dynamic => write!(f, "dynamic"),
+        }
+    }
+}
+
+impl TryFrom<CrateType> for LibType {
+    type Error = ();
+
+    fn try_from(value: CrateType) -> Result<Self, Self::Error> {
+        match value {
+            CrateType::CDyLib | CrateType::DyLib => Ok(LibType::Dynamic),
+            CrateType::StaticLib => Ok(LibType::Static),
+            _ => Err(()),
         }
     }
 }
