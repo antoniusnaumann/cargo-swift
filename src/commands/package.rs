@@ -245,6 +245,7 @@ pub enum Platform {
     Tvos,
     Watchos,
     Visionos,
+    Maccatalyst,
 }
 
 impl Platform {
@@ -255,6 +256,7 @@ impl Platform {
             Platform::Tvos => vec![ApplePlatform::TvOS, ApplePlatform::TvOSSimulator],
             Platform::Watchos => vec![ApplePlatform::WatchOS, ApplePlatform::WatchOSSimulator],
             Platform::Visionos => vec![ApplePlatform::VisionOS, ApplePlatform::VisionOSSimulator],
+            Platform::Maccatalyst => vec![ApplePlatform::MacCatalyst],
         }
     }
 
@@ -265,6 +267,7 @@ impl Platform {
             Platform::Tvos => "tvOS",
             Platform::Watchos => "watchOS",
             Platform::Visionos => "visionOS",
+            Platform::Maccatalyst => "Mac Catalyst",
         };
 
         format!(
@@ -280,7 +283,7 @@ impl Platform {
     fn is_experimental(&self) -> bool {
         match self {
             Platform::Macos | Platform::Ios => false,
-            Platform::Tvos | Platform::Watchos | Platform::Visionos => true,
+            Platform::Tvos | Platform::Watchos | Platform::Visionos | Platform::Maccatalyst => true,
         }
     }
 
