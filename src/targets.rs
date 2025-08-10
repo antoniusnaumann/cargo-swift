@@ -194,7 +194,7 @@ pub enum ApplePlatform {
     IOS,
     IOSSimulator,
     MacOS,
-    // MacCatalyst,
+    MacCatalyst,
     TvOS,
     TvOSSimulator,
     WatchOS,
@@ -222,6 +222,12 @@ impl TargetInfo for ApplePlatform {
                 universal_name: "universal-macos",
                 architectures: nonempty!["x86_64-apple-darwin", "aarch64-apple-darwin"],
                 display_name: "macOS",
+                platform: *self,
+            },
+            MacCatalyst => Target::Universal {
+                universal_name: "universal-maccatalyst",
+                architectures: nonempty!["x86_64-apple-ios-macabi", "aarch64-apple-ios-macabi"],
+                display_name: "Mac Catalyst",
                 platform: *self,
             },
             TvOS => Target::Single {
@@ -268,6 +274,7 @@ impl TargetInfo for ApplePlatform {
         match self {
             ApplePlatform::IOS | ApplePlatform::IOSSimulator => false,
             ApplePlatform::MacOS => false,
+            ApplePlatform::MacCatalyst => false,
             ApplePlatform::TvOS | ApplePlatform::TvOSSimulator => true,
             ApplePlatform::WatchOS | ApplePlatform::WatchOSSimulator => true,
             ApplePlatform::VisionOS | ApplePlatform::VisionOSSimulator => true,
