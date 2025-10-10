@@ -35,7 +35,7 @@ execute = "0.2.13"
 indicatif = "0.17.11"
 
 # FFI Bindings
-uniffi_bindgen = { version = "=0.29.2" }
+uniffi_bindgen = { version = "=0.30.0" }
 
 # Error Handling
 anyhow = "1.0.98"
