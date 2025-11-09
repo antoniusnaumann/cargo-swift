@@ -21,12 +21,12 @@ pub(crate) fn metadata() -> &'static Metadata {
 }
 
 pub(crate) trait MetadataExt {
-    fn target_dir(&self) -> Cow<Utf8Path>;
+    fn target_dir(&self) -> Cow<'_, Utf8Path>;
     fn current_crate(&self) -> Option<&Package>;
 }
 
 impl MetadataExt for Metadata {
-    fn target_dir(&self) -> Cow<Utf8Path> {
+    fn target_dir(&self) -> Cow<'_, Utf8Path> {
         let target_dir = self.target_directory.as_path();
         let relative = target_dir.to_relative();
 
