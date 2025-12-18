@@ -41,6 +41,7 @@ pub fn patch_subframework(
     sf_dir: &Path,
     generated_dir: &Path,
     xcframework_name: &str,
+    ffi_module_name: Option<&str>,
 ) -> Result<()> {
     let mut headers = sf_dir.to_owned();
     headers.push("headers");
@@ -51,7 +52,7 @@ pub fn patch_subframework(
 
     let mut patched_headers = sf_dir.to_owned();
     patched_headers.push("headers");
-    patched_headers.push(xcframework_name);
+    patched_headers.push(ffi_module_name.unwrap_or(xcframework_name));
     std::fs::create_dir_all(&patched_headers)
         .with_context(|| format!("Failed to create empty patched directory {patched_headers:?}"))?;
 
@@ -82,12 +83,18 @@ pub fn patch_xcframework(
     output_dir: &Path,
     generated_dir: &Path,
     xcframework_name: &str,
+    ffi_module_name: Option<&str>,
 ) -> Result<()> {
     let subframeworks =
         search_subframework_paths(output_dir).context("Failed to get subframework components")?;
     for subframework in subframeworks {
-        patch_subframework(&subframework, generated_dir, xcframework_name)
-            .with_context(|| format!("Failed to patch {subframework:?}"))?;
+        patch_subframework(
+            &subframework,
+            generated_dir,
+            xcframework_name,
+            ffi_module_name,
+        )
+        .with_context(|| format!("Failed to patch {subframework:?}"))?;
     }
 
     Ok(())
@@ -100,6 +107,7 @@ pub fn create_xcframework(
     output_dir: &Path,
     mode: Mode,
     lib_type: LibType,
+    ffi_module_name: Option<&str>,
 ) -> Result<()> {
     /*println!(
         "Targets: {:#?}\nlib_name: {:?}\nxcframework_name: {:?}\ngenerated_dir {:?}\noutput_dir: {:?}\nmode: {:?}\nlib_type: {:?}",
@@ -141,7 +149,7 @@ pub fn create_xcframework(
     if !output.status.success() {
         Err(output.stderr.into())
     } else {
-        patch_xcframework(output_dir, generated_dir, xcframework_name)
+        patch_xcframework(output_dir, generated_dir, xcframework_name, ffi_module_name)
             .context("Failed to patch the XCFramework")?;
         Ok(())
     }

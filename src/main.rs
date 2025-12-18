@@ -69,7 +69,7 @@ enum Action {
 
         #[arg(long = "macro")]
         // (Deprecated) This flag is no longer neccessary, as this is the default mode. This flag
-        // is ignored now and will be removed in future releases 
+        // is ignored now and will be removed in future releases
         // Initialize the project as a macro-only crate without .udl files
         macro_only: bool,
     },
@@ -129,7 +129,7 @@ fn main() -> ExitCode {
             lib_type,
             plain,
             macro_only: _,
-            udl
+            udl,
         } => init::run(crate_name, config, vcs, lib_type, plain, !udl),
 
         Action::Package {
