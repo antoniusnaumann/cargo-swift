@@ -5,7 +5,8 @@ use std::process::{Command, Stdio};
 
 use camino::Utf8PathBuf;
 use cargo_metadata::{Package, TargetKind};
-use clap::ValueEnum;
+use clap::builder::TypedValueParser;
+use clap::{Args, ValueEnum};
 use convert_case::{Case, Casing};
 use dialoguer::{Input, MultiSelect};
 use execute::{command, Execute};
@@ -57,7 +58,7 @@ pub struct FeatureOptions {
 
 #[allow(clippy::too_many_arguments)]
 pub fn run(
-    platforms: Option<Vec<Platform>>,
+    platforms: Option<Vec<PlatformSpec>>,
     build_target: Option<&str>,
     package_name: Option<String>,
     xcframework_name: String,
@@ -118,7 +119,7 @@ pub fn run(
 #[allow(clippy::too_many_arguments)]
 fn run_for_crate(
     current_crate: &Package,
-    platforms: Option<Vec<Platform>>,
+    platforms: Option<Vec<PlatformSpec>>,
     build_target: Option<&str>,
     package_name: Option<String>,
     xcframework_name: String,
@@ -159,8 +160,8 @@ fn run_for_crate(
     }
 
     let mut targets: Vec<_> = platforms
-        .into_iter()
-        .flat_map(|p| p.into_apple_platforms())
+        .iter()
+        .flat_map(|p| p.platform.into_apple_platforms())
         .map(|p| p.target())
         .collect();
 
@@ -228,7 +229,13 @@ fn run_for_crate(
         lib_type,
         config,
     )?;
-    create_package_with_output(&package_name, &xcframework_name, disable_warnings, config)?;
+    create_package_with_output(
+        &package_name,
+        &xcframework_name,
+        disable_warnings,
+        &platforms,
+        config,
+    )?;
 
     Ok(())
 }
@@ -298,7 +305,68 @@ impl Platform {
     }
 }
 
-fn prompt_platforms(accept_all: bool) -> Vec<Platform> {
+#[derive(Debug, Clone, Args)]
+pub struct PlatformSpec {
+    pub platform: Platform,
+    pub min_version: Option<String>,
+}
+
+impl PlatformSpec {
+    pub(crate) fn package_swift(&self) -> String {
+        let v = self.min_version.as_deref();
+        match self.platform {
+            Platform::Macos => format!(".macOS(.v{})", v.unwrap_or("10_15")),
+            Platform::Ios => format!(".iOS(.v{})", v.unwrap_or("13")),
+            Platform::Tvos => format!(".tvOS(.v{})", v.unwrap_or("13")),
+            Platform::Watchos => format!(".watchOS(.v{})", v.unwrap_or("6")),
+            Platform::Visionos => format!(".visionOS(.v{})", v.unwrap_or("1")),
+            Platform::Maccatalyst => format!(".macCatalyst(.v{})", v.unwrap_or("13")),
+        }
+    }
+}
+
+#[derive(Clone)]
+pub struct PlatformSpecParser;
+
+impl TypedValueParser for PlatformSpecParser {
+    type Value = PlatformSpec;
+
+    fn parse_ref(
+        &self,
+        _cmd: &clap::Command,
+        _arg: Option<&clap::Arg>,
+        value: &std::ffi::OsStr,
+    ) -> clap::error::Result<Self::Value> {
+        let s = value.to_string_lossy();
+
+        let (platform_str, min_version) = match s.split_once('@') {
+            Some((p, v)) => (p, Some(v.to_string())),
+            None => (s.as_ref(), None),
+        };
+
+        let platform = Platform::from_str(platform_str, true).map_err(|_| {
+            clap::error::Error::raw(
+                clap::error::ErrorKind::InvalidValue,
+                format!("invalid platform `{}`", platform_str),
+            )
+        })?;
+
+        Ok(PlatformSpec {
+            platform,
+            min_version,
+        })
+    }
+
+    fn possible_values(&self) -> Option<Box<dyn Iterator<Item = clap::builder::PossibleValue>>> {
+        Some(Box::new(
+            Platform::value_variants()
+                .iter()
+                .filter_map(|v| v.to_possible_value()),
+        ))
+    }
+}
+
+fn prompt_platforms(accept_all: bool) -> Vec<PlatformSpec> {
     let platforms = Platform::all();
     let items = platforms.map(|p| p.display_name());
 
@@ -306,6 +374,10 @@ fn prompt_platforms(accept_all: bool) -> Vec<Platform> {
         return platforms
             .into_iter()
             .filter(|p| !p.is_experimental())
+            .map(|platform| PlatformSpec {
+                platform,
+                min_version: None,
+            })
             .collect();
     }
 
@@ -319,7 +391,13 @@ fn prompt_platforms(accept_all: bool) -> Vec<Platform> {
 
     let chosen: Vec<usize> = selector.interact().unwrap();
 
-    chosen.into_iter().map(|i| platforms[i]).collect()
+    chosen
+        .into_iter()
+        .map(|i| PlatformSpec {
+            platform: platforms[i],
+            min_version: None,
+        })
+        .collect()
 }
 
 /// Checks if toolchains for all target architectures are installed and returns a
@@ -588,12 +666,13 @@ fn create_package_with_output(
     package_name: &str,
     xcframework_name: &str,
     disable_warnings: bool,
+    platforms: &[PlatformSpec],
     config: &Config,
 ) -> Result<()> {
     run_step(
         config,
         format!("Creating Swift Package '{package_name}'..."),
-        || create_swiftpackage(package_name, xcframework_name, disable_warnings),
+        || create_swiftpackage(package_name, xcframework_name, disable_warnings, platforms),
     )?;
 
     let spinner = config.silent.not().then(|| {

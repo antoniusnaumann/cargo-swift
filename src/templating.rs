@@ -34,4 +34,5 @@ pub(crate) struct PackageSwift<'a> {
     pub(crate) package_name: &'a str,
     pub(crate) xcframework_name: &'a str,
     pub(crate) disable_warnings: bool,
+    pub(crate) platforms: &'a str,
 }
