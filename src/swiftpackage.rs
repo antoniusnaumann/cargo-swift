@@ -13,6 +13,7 @@ pub fn create_swiftpackage(
     xcframework_name: &str,
     disable_warnings: bool,
     platforms: &[package::PlatformSpec],
+    swift_tools_version: &str,
 ) -> Result<()> {
     let platforms = &platforms.iter().map(|p| p.package_swift()).join(", ");
     // TODO: Instead of assuming the directory and the xcframework, let this manage directory
@@ -22,6 +23,7 @@ pub fn create_swiftpackage(
         xcframework_name,
         disable_warnings,
         platforms,
+        swift_tools_version,
     };
 
     write(
