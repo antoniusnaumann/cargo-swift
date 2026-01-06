@@ -68,6 +68,7 @@ pub fn run(
     lib_type_arg: LibTypeArg,
     features: FeatureOptions,
     skip_toolchains_check: bool,
+    swift_tools_version: &str,
 ) -> Result<()> {
     // TODO: Allow path as optional argument to take other directories than current directory
     // let crates = metadata().uniffi_crates();
@@ -88,6 +89,7 @@ pub fn run(
             lib_type_arg,
             features,
             skip_toolchains_check,
+            swift_tools_version,
         );
     } else if package_name.is_some() {
         Err("Package name can only be specified when building a single crate!")?;
@@ -109,6 +111,7 @@ pub fn run(
                 lib_type_arg.clone(),
                 features.clone(),
                 skip_toolchains_check,
+                swift_tools_version,
             )
         })
         .filter_map(|result| result.err())
@@ -129,6 +132,7 @@ fn run_for_crate(
     lib_type_arg: LibTypeArg,
     features: FeatureOptions,
     skip_toolchains_check: bool,
+    swift_tools_version: &str,
 ) -> Result<()> {
     let lib = current_crate
         .targets
@@ -234,6 +238,7 @@ fn run_for_crate(
         &xcframework_name,
         disable_warnings,
         &platforms,
+        swift_tools_version,
         config,
     )?;
 
@@ -667,12 +672,21 @@ fn create_package_with_output(
     xcframework_name: &str,
     disable_warnings: bool,
     platforms: &[PlatformSpec],
+    swift_tools_version: &str,
     config: &Config,
 ) -> Result<()> {
     run_step(
         config,
         format!("Creating Swift Package '{package_name}'..."),
-        || create_swiftpackage(package_name, xcframework_name, disable_warnings, platforms),
+        || {
+            create_swiftpackage(
+                package_name,
+                xcframework_name,
+                disable_warnings,
+                platforms,
+                swift_tools_version,
+            )
+        },
     )?;
 
     let spinner = config.silent.not().then(|| {

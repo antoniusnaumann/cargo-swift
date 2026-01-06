@@ -116,6 +116,9 @@ enum Action {
 
         #[arg(long)]
         no_default_features: bool,
+
+        #[arg(long, default_value = "5.5")]
+        swift_tools_version: String,
     },
 }
 
@@ -145,6 +148,7 @@ fn main() -> ExitCode {
             features,
             all_features,
             no_default_features,
+            swift_tools_version,
         } => package::run(
             platforms,
             target.as_deref(),
@@ -160,6 +164,7 @@ fn main() -> ExitCode {
                 no_default_features,
             },
             skip_toolchains_check,
+            &swift_tools_version,
         ),
     };
 
