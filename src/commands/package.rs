@@ -217,11 +217,19 @@ fn run_for_crate(
     }
 
     let crate_name = lib.name.replace('-', "_");
+
     for target in &targets {
         build_with_output(target, &crate_name, mode, lib_type, config, &features)?;
     }
 
-    generate_bindings_with_output(&targets, &crate_name, mode, lib_type, config)?;
+    let ffi_module_name = generate_bindings_with_output(
+        &targets,
+        &crate_name,
+        mode,
+        lib_type,
+        config,
+        Some(&xcframework_name),
+    )?;
 
     recreate_output_dir(&package_name).expect("Could not create package output directory!");
     create_xcframework_with_output(
@@ -232,6 +240,7 @@ fn run_for_crate(
         mode,
         lib_type,
         config,
+        &ffi_module_name,
     )?;
     create_package_with_output(
         &package_name,
@@ -601,7 +610,8 @@ fn generate_bindings_with_output(
     mode: Mode,
     lib_type: LibType,
     config: &Config,
-) -> Result<()> {
+    ffi_module_name: Option<&str>,
+) -> Result<String> {
     run_step(config, "Generating Swift bindings...", || {
         let lib_file = library_file_name(lib_name, lib_type);
         let target = metadata().target_dir();
@@ -612,7 +622,7 @@ fn generate_bindings_with_output(
         let arch = archs.first();
         let lib_path: Utf8PathBuf = format!("{target}/{arch}/{mode}/{lib_file}").into();
 
-        generate_bindings(&lib_path)
+        generate_bindings(&lib_path, ffi_module_name)
             .map_err(|e| format!("Could not generate UniFFI bindings for udl files due to the following error: \n {e}").into())
     })
 }
@@ -647,6 +657,7 @@ fn create_xcframework_with_output(
     mode: Mode,
     lib_type: LibType,
     config: &Config,
+    ffi_module_name: &str,
 ) -> Result<()> {
     run_step(config, "Creating XCFramework...", || {
         // TODO: show command spinner here with xcbuild command
@@ -662,6 +673,7 @@ fn create_xcframework_with_output(
             &output_dir,
             mode,
             lib_type,
+            Some(ffi_module_name),
         )
     })
     .map_err(|e| format!("Failed to create XCFramework due to the following error: \n {e}").into())

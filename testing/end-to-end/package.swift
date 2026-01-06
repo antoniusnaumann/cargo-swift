@@ -24,11 +24,19 @@ cargoSwiftInit.arguments = ["cargo", "swift", "init", projectName, "-y", "--sile
 try! cargoSwiftInit.run()
 cargoSwiftInit.waitUntilExit()
 
+print("Adding uniffi.toml with conflicting ffi_module_name...")
+let uniffiToml = """
+[bindings.swift]
+ffi_module_name = "ConflictingFFI"
+"""
+FileManager.default.createFile(atPath: "\(projectName)/uniffi.toml", contents: uniffiToml.data(using: .utf8), attributes: nil)
+
 print("Running tests for cargo swift package...")
 let cargoSwiftPackage = Process()
+let xcFrameworkName = "CustomFramework"
 cargoSwiftPackage.executableURL = URL(fileURLWithPath: "/usr/bin/env")
 cargoSwiftPackage.currentDirectoryPath += "/" + projectName
-cargoSwiftPackage.arguments = ["cargo", "swift", "package", "-y", "--silent", "-p", "macos", "ios"]
+cargoSwiftPackage.arguments = ["cargo", "swift", "package", "-y", "--silent", "-p", "macos", "ios", "--xcframework-name", xcFrameworkName]
 
 try! cargoSwiftPackage.run()
 cargoSwiftPackage.waitUntilExit()
@@ -41,7 +49,7 @@ guard fileExists(atPath: "\(projectName)/\(packageName)/Package.swift") else {
 	error("No Package.swift file found in package directory")
 	exit(1)
 }
-guard dirExists(atPath: "\(projectName)/\(packageName)/RustFramework.xcframework") else { 
+guard dirExists(atPath: "\(projectName)/\(packageName)/\(xcFrameworkName).xcframework") else { 
 	error("No .xcframework directory found in package directory")
 	exit(1)
 }
