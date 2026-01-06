@@ -7,8 +7,7 @@ import PackageDescription;
 let package = Package(
     name: "{{ package_name }}",
     platforms: [
-        .iOS(.v13),
-        .macOS(.v10_15)
+        {{ platforms }}
     ],
     products: [
         .library(

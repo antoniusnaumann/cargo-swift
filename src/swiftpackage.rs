@@ -1,8 +1,9 @@
 use askama::Template;
 use glob::glob;
+use itertools::Itertools;
 use std::fs::{copy, create_dir_all, write};
 
-use crate::{recreate_dir, templating, Result};
+use crate::{package, recreate_dir, templating, Result};
 
 /// Create artifacts for a swift package given the package name
 ///
@@ -11,13 +12,16 @@ pub fn create_swiftpackage(
     package_name: &str,
     xcframework_name: &str,
     disable_warnings: bool,
+    platforms: &[package::PlatformSpec],
 ) -> Result<()> {
+    let platforms = &platforms.iter().map(|p| p.package_swift()).join(", ");
     // TODO: Instead of assuming the directory and the xcframework, let this manage directory
     //  recreation and let it copy the xcframework
     let package_manifest = templating::PackageSwift {
         package_name,
         xcframework_name,
         disable_warnings,
+        platforms,
     };
 
     write(
