@@ -35,13 +35,13 @@ pub fn generate_bindings(lib_path: &Utf8Path) -> Result<()> {
         .open(headers.join("module.modulemap"))?;
 
     for output in uniffi_outputs {
-        let crate_name = output.ci.crate_name();
+        let namespace = output.ci.namespace();
         fs::copy(
-            out_dir.join(format!("{crate_name}.swift")),
-            sources.join(format!("{crate_name}.swift")),
+            out_dir.join(format!("{namespace}.swift")),
+            sources.join(format!("{namespace}.swift")),
         )?;
 
-        let ffi_name = format!("{crate_name}FFI");
+        let ffi_name = format!("{namespace}FFI");
         fs::copy(
             out_dir.join(format!("{ffi_name}.h")),
             headers.join(format!("{ffi_name}.h")),
