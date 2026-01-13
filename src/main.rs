@@ -89,8 +89,8 @@ enum Action {
         #[arg(short = 'n', long = "name")]
         package_name: Option<String>,
 
-        #[arg(long, default_value = "RustFramework")]
-        xcframework_name: String,
+        #[arg(short ='f', long = "xcframework")]
+        xcframework_name: Option<String>,
 
         #[arg(short, long)]
         /// Build package optimized for release (default: debug)
