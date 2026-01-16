@@ -1,7 +1,7 @@
 [package]
 name = "cargo-swift"
 description = "A cargo plugin to easily build Swift packages from Rust code for use in iOS and macOS applications"
-version = "0.10.0"
+version = "0.11.0"
 edition = "2021"
 authors = ["Antonius Naumann <git@antonius.dev>"]
 license = "MIT OR Apache-2.0"
@@ -35,7 +35,7 @@ execute = "0.2.13"
 indicatif = "0.17.11"
 
 # FFI Bindings
-uniffi_bindgen = { version = "=0.30.0" }
+uniffi_bindgen = { version = "=0.31.0" }
 
 # Error Handling
 anyhow = "1.0.98"
