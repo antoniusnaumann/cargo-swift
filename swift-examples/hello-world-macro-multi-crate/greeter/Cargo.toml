@@ -12,5 +12,5 @@ crate-type = ["cdylib", "staticlib", "lib"]
 name = "greeter"
 
 [dependencies]
-uniffi = "0.30"
+uniffi = "0.31"
 greeter-lib = { path = "./greeter-lib" }
