@@ -61,7 +61,7 @@ pub fn run(
     platforms: Option<Vec<PlatformSpec>>,
     build_target: Option<&str>,
     package_name: Option<String>,
-    xcframework_name: String,
+    xcframework_name: Option<String>,
     disable_warnings: bool,
     config: Config,
     mode: Mode,
@@ -70,6 +70,15 @@ pub fn run(
     skip_toolchains_check: bool,
     swift_tools_version: &str,
 ) -> Result<()> {
+    // Show deprecation warning if --xcframework-name is used
+    if xcframework_name.is_some() {
+        warning!(
+            &config,
+            "The --xcframework-name flag is deprecated and will be removed in a future release. \
+             The xcframework name is now derived from the FFI module name in uniffi.toml."
+        );
+    }
+
     // TODO: Allow path as optional argument to take other directories than current directory
     // let crates = metadata().uniffi_crates();
     let crates = [metadata()
@@ -125,7 +134,7 @@ fn run_for_crate(
     platforms: Option<Vec<PlatformSpec>>,
     build_target: Option<&str>,
     package_name: Option<String>,
-    xcframework_name: String,
+    xcframework_name: Option<String>,
     disable_warnings: bool,
     config: &Config,
     mode: Mode,
@@ -221,7 +230,11 @@ fn run_for_crate(
         build_with_output(target, &crate_name, mode, lib_type, config, &features)?;
     }
 
-    generate_bindings_with_output(&targets, &crate_name, mode, lib_type, config)?;
+    let ffi_module_name =
+        generate_bindings_with_output(&targets, &crate_name, mode, lib_type, config)?;
+
+    // Use the FFI module name as the xcframework name by default
+    let xcframework_name = xcframework_name.unwrap_or_else(|| ffi_module_name.clone());
 
     recreate_output_dir(&package_name).expect("Could not create package output directory!");
     create_xcframework_with_output(
@@ -229,6 +242,7 @@ fn run_for_crate(
         &crate_name,
         &package_name,
         &xcframework_name,
+        &ffi_module_name,
         mode,
         lib_type,
         config,
@@ -601,7 +615,7 @@ fn generate_bindings_with_output(
     mode: Mode,
     lib_type: LibType,
     config: &Config,
-) -> Result<()> {
+) -> Result<String> {
     run_step(config, "Generating Swift bindings...", || {
         let lib_file = library_file_name(lib_name, lib_type);
         let target = metadata().target_dir();
@@ -639,11 +653,13 @@ fn build_with_output(
     Ok(())
 }
 
+#[allow(clippy::too_many_arguments)]
 fn create_xcframework_with_output(
     targets: &[Target],
     lib_name: &str,
     package_name: &str,
     xcframework_name: &str,
+    ffi_module_name: &str,
     mode: Mode,
     lib_type: LibType,
     config: &Config,
@@ -658,6 +674,7 @@ fn create_xcframework_with_output(
             targets,
             lib_name,
             xcframework_name,
+            ffi_module_name,
             &generated_dir,
             &output_dir,
             mode,

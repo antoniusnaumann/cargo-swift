@@ -3,14 +3,19 @@ use std::{
     io::{self, Write},
 };
 
+use anyhow::anyhow;
 use crate::Result;
 use camino::Utf8Path;
 use uniffi_bindgen::bindings::{GenerateOptions, TargetLanguage};
 
 use crate::recreate_dir;
 
-/// Generates UniFFI bindings for crate and returns the .udl namespace
-pub fn generate_bindings(lib_path: &Utf8Path) -> Result<()> {
+/// Generates UniFFI bindings for crate and returns the FFI module name.
+///
+/// This function respects the `ffi_module_name` and `ffi_module_filename` settings
+/// in uniffi.toml. The returned FFI module name is detected from the generated
+/// header files, which reflect whatever is configured in uniffi.toml.
+pub fn generate_bindings(lib_path: &Utf8Path) -> Result<String> {
     let out_dir = Utf8Path::new("./generated");
     let headers = out_dir.join("headers");
     let sources = out_dir.join("sources");
@@ -32,6 +37,24 @@ pub fn generate_bindings(lib_path: &Utf8Path) -> Result<()> {
         .create(true)
         .append(true)
         .open(headers.join("module.modulemap"))?;
+
+    // Detect the FFI module name from the generated header file.
+    // This respects ffi_module_name/ffi_module_filename from uniffi.toml.
+    let ffi_module_name = fs::read_dir(out_dir)?
+        .filter_map(|entry| entry.ok())
+        .find(|entry| {
+            entry.path().extension().is_some_and(|ext| ext == "h")
+                && entry
+                    .path()
+                    .file_stem()
+                    .is_some_and(|stem| !stem.to_string_lossy().contains("BridgingHeader"))
+        })
+        .ok_or_else(|| anyhow!("Could not find generated header file in {}", out_dir))?
+        .path()
+        .file_stem()
+        .unwrap()
+        .to_string_lossy()
+        .to_string();
 
     let dir = fs::read_dir(out_dir)?;
 
@@ -62,5 +85,5 @@ pub fn generate_bindings(lib_path: &Utf8Path) -> Result<()> {
         }
     }
 
-    Ok(())
+    Ok(ffi_module_name)
 }
