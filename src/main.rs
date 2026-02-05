@@ -89,8 +89,10 @@ enum Action {
         #[arg(short = 'n', long = "name")]
         package_name: Option<String>,
 
-        #[arg(long, default_value = "RustFramework")]
-        xcframework_name: String,
+        #[arg(long)]
+        /// (Deprecated) This flag is deprecated and will be removed in future releases.
+        /// The xcframework name is now derived from the FFI module name in uniffi.toml.
+        xcframework_name: Option<String>,
 
         #[arg(short, long)]
         /// Build package optimized for release (default: debug)

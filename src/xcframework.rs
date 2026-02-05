@@ -40,8 +40,9 @@ pub fn search_subframework_paths(output_dir: &Path) -> Result<Vec<PathBuf>> {
 pub fn patch_subframework(
     sf_dir: &Path,
     generated_dir: &Path,
-    xcframework_name: &str,
+    ffi_module_name: &str,
 ) -> Result<()> {
+    // xcodebuild creates lowercase "headers", but we rename to uppercase "Headers" (Apple convention)
     let mut headers = sf_dir.to_owned();
     headers.push("headers");
     remove_dir_all(&headers)
@@ -50,8 +51,8 @@ pub fn patch_subframework(
     generated_headers.push("headers");
 
     let mut patched_headers = sf_dir.to_owned();
-    patched_headers.push("headers");
-    patched_headers.push(xcframework_name);
+    patched_headers.push("Headers");
+    patched_headers.push(ffi_module_name);
     std::fs::create_dir_all(&patched_headers)
         .with_context(|| format!("Failed to create empty patched directory {patched_headers:?}"))?;
 
@@ -81,29 +82,31 @@ pub fn patch_subframework(
 pub fn patch_xcframework(
     output_dir: &Path,
     generated_dir: &Path,
-    xcframework_name: &str,
+    ffi_module_name: &str,
 ) -> Result<()> {
     let subframeworks =
         search_subframework_paths(output_dir).context("Failed to get subframework components")?;
     for subframework in subframeworks {
-        patch_subframework(&subframework, generated_dir, xcframework_name)
+        patch_subframework(&subframework, generated_dir, ffi_module_name)
             .with_context(|| format!("Failed to patch {subframework:?}"))?;
     }
 
     Ok(())
 }
+#[allow(clippy::too_many_arguments)]
 pub fn create_xcframework(
     targets: &[Target],
     lib_name: &str,
     xcframework_name: &str,
+    ffi_module_name: &str,
     generated_dir: &Path,
     output_dir: &Path,
     mode: Mode,
     lib_type: LibType,
 ) -> Result<()> {
     /*println!(
-        "Targets: {:#?}\nlib_name: {:?}\nxcframework_name: {:?}\ngenerated_dir {:?}\noutput_dir: {:?}\nmode: {:?}\nlib_type: {:?}",
-        targets, lib_name, xcframework_name, generated_dir, output_dir, mode, lib_type
+        "Targets: {:#?}\nlib_name: {:?}\nxcframework_name: {:?}\nffi_module_name: {:?}\ngenerated_dir {:?}\noutput_dir: {:?}\nmode: {:?}\nlib_type: {:?}",
+        targets, lib_name, xcframework_name, ffi_module_name, generated_dir, output_dir, mode, lib_type
     );*/
     let libs: Vec<_> = targets
         .iter()
@@ -141,7 +144,7 @@ pub fn create_xcframework(
     if !output.status.success() {
         Err(output.stderr.into())
     } else {
-        patch_xcframework(output_dir, generated_dir, xcframework_name)
+        patch_xcframework(output_dir, generated_dir, ffi_module_name)
             .context("Failed to patch the XCFramework")?;
         Ok(())
     }
