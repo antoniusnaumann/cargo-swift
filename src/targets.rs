@@ -1,18 +1,105 @@
+use std::collections::HashSet;
+use std::process::Stdio;
 use std::{fmt::Display, process::Command};
 
 use execute::command;
+use execute::Execute;
 use nonempty::{nonempty, NonEmpty};
 
 use crate::lib_type::LibType;
 use crate::metadata::{metadata, MetadataExt};
 use crate::package::FeatureOptions;
 
-pub trait TargetInfo {
-    fn target(&self) -> Target;
-    /// Marks whether a pre-built std-lib is provided for this target (Tier 1 and Tier 2) via rustup or target needs to
-    /// be build (Tier 3)
-    /// See: https://doc.rust-lang.org/nightly/rustc/platform-support.html
-    fn is_tier_3(&self) -> bool;
+/// Queries `rustup target list` for both the default and nightly toolchains,
+/// caching which targets are available and installed on each. When any
+/// architecture requires nightly, all builds use nightly for consistency
+/// (same Rust compiler version across the entire build).
+pub struct ToolchainTargets {
+    stable_available: HashSet<String>,
+    stable_installed: HashSet<String>,
+    nightly_available: HashSet<String>,
+    nightly_installed: HashSet<String>,
+    /// When true, all targets use `cargo +nightly` for compiler version consistency.
+    use_nightly: bool,
+}
+
+impl ToolchainTargets {
+    /// Run `rustup target list` for both default and nightly toolchains, then
+    /// determine whether nightly is needed for any of the given target architectures.
+    /// If nightly is not installed, its sets will be empty (conservative fallback).
+    pub fn query(targets: &[Target]) -> Self {
+        let (stable_available, stable_installed) = Self::parse_target_list(&["target", "list"]);
+        let (nightly_available, nightly_installed) =
+            Self::parse_target_list(&["target", "list", "--toolchain", "nightly"]);
+
+        let use_nightly = targets
+            .iter()
+            .flat_map(|t| t.architectures())
+            .any(|arch| !stable_available.contains(arch));
+
+        Self {
+            stable_available,
+            stable_installed,
+            nightly_available,
+            nightly_installed,
+            use_nightly,
+        }
+    }
+
+    fn parse_target_list(args: &[&str]) -> (HashSet<String>, HashSet<String>) {
+        let mut rustup = Command::new("rustup");
+        rustup.args(args);
+        rustup.stdout(Stdio::piped());
+        rustup.stderr(Stdio::null());
+
+        let output = match rustup.execute_output() {
+            Ok(output) if output.status.success() => output,
+            _ => return (HashSet::new(), HashSet::new()),
+        };
+        let output = String::from_utf8_lossy(&output.stdout);
+
+        let mut available = HashSet::new();
+        let mut installed = HashSet::new();
+
+        for line in output.lines() {
+            let trimmed = line.trim();
+            if trimmed.is_empty() {
+                continue;
+            }
+            if let Some(name) = trimmed.strip_suffix("(installed)") {
+                let name = name.trim().to_owned();
+                installed.insert(name.clone());
+                available.insert(name);
+            } else {
+                available.insert(trimmed.to_owned());
+            }
+        }
+
+        (available, installed)
+    }
+
+    /// Returns true if the arch requires `-Z build-std`
+    /// (not available on either stable or nightly).
+    pub fn needs_build_std(&self, arch: &str) -> bool {
+        !self.stable_available.contains(arch) && !self.nightly_available.contains(arch)
+    }
+
+    /// Returns true if any architecture in the build requires nightly.
+    pub fn use_nightly(&self) -> bool {
+        self.use_nightly
+    }
+
+    /// Returns true if the target is available on stable but not yet installed.
+    pub fn is_stable_missing(&self, arch: &str) -> bool {
+        self.stable_available.contains(arch) && !self.stable_installed.contains(arch)
+    }
+
+    /// Returns true if the target is only available on nightly and not yet installed there.
+    pub fn is_nightly_missing(&self, arch: &str) -> bool {
+        !self.stable_available.contains(arch)
+            && self.nightly_available.contains(arch)
+            && !self.nightly_installed.contains(arch)
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -46,13 +133,19 @@ impl Display for Mode {
 }
 
 impl Target {
-    fn cargo_build_commands(&self, mode: Mode, features: &FeatureOptions) -> Vec<Command> {
+    fn cargo_build_commands(
+        &self,
+        mode: Mode,
+        features: &FeatureOptions,
+        toolchain_targets: &ToolchainTargets,
+    ) -> Vec<Command> {
         self.architectures()
             .into_iter()
             .map(|arch| {
-                // FIXME: Remove nightly for Tier 3 targets here once build-std is stabilized
-                let mut cmd = if self.platform().is_tier_3() {
+                let mut cmd = if toolchain_targets.needs_build_std(arch) {
                     command("cargo +nightly build -Z build-std")
+                } else if toolchain_targets.use_nightly() {
+                    command("cargo +nightly build")
                 } else {
                     command("cargo build")
                 };
@@ -129,8 +222,9 @@ impl Target {
         mode: Mode,
         lib_type: LibType,
         features: &FeatureOptions,
+        toolchain_targets: &ToolchainTargets,
     ) -> Vec<Command> {
-        self.cargo_build_commands(mode, features)
+        self.cargo_build_commands(mode, features, toolchain_targets)
             .into_iter()
             .chain(self.lipo_commands(lib_name, mode, lib_type))
             .chain(self.rpath_install_id_commands(lib_name, mode, lib_type))
@@ -203,8 +297,8 @@ pub enum ApplePlatform {
     VisionOSSimulator,
 }
 
-impl TargetInfo for ApplePlatform {
-    fn target(&self) -> Target {
+impl ApplePlatform {
+    pub fn target(&self) -> Target {
         use ApplePlatform::*;
         match self {
             IOS => Target::Single {
@@ -267,17 +361,6 @@ impl TargetInfo for ApplePlatform {
                 display_name: "visionOS Simulator",
                 platform: *self,
             },
-        }
-    }
-
-    fn is_tier_3(&self) -> bool {
-        match self {
-            ApplePlatform::IOS | ApplePlatform::IOSSimulator => false,
-            ApplePlatform::MacOS => false,
-            ApplePlatform::MacCatalyst => false,
-            ApplePlatform::TvOS | ApplePlatform::TvOSSimulator => true,
-            ApplePlatform::WatchOS | ApplePlatform::WatchOSSimulator => true,
-            ApplePlatform::VisionOS | ApplePlatform::VisionOSSimulator => true,
         }
     }
 }

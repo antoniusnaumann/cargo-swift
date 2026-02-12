@@ -206,19 +206,27 @@ fn run_for_crate(
         }
     }
 
-    if !skip_toolchains_check {
-        let missing_toolchains = check_installed_toolchains(&targets);
-        let nightly_toolchains = check_nightly_installed(&targets);
+    let toolchain_targets = ToolchainTargets::query(&targets);
 
-        let installation_required =
-            &[missing_toolchains.as_slice(), nightly_toolchains.as_slice()].concat();
+    if !skip_toolchains_check {
+        let missing_stable = check_stable_missing_targets(&targets, &toolchain_targets);
+        let missing_nightly_targets = check_nightly_missing_targets(&targets, &toolchain_targets);
+        let missing_nightly_src = check_nightly_src_installed(&targets, &toolchain_targets);
+
+        let installation_required = &[
+            missing_stable.as_slice(),
+            missing_nightly_targets.as_slice(),
+            missing_nightly_src.as_slice(),
+        ]
+        .concat();
 
         if !installation_required.is_empty() {
             if config.accept_all || prompt_toolchain_installation(installation_required) {
-                install_toolchains(&missing_toolchains, config.silent)?;
-                if !nightly_toolchains.is_empty() {
+                install_toolchains(&missing_stable, config.silent)?;
+                if !missing_nightly_targets.is_empty() || !missing_nightly_src.is_empty() {
                     install_nightly_src(config.silent)?;
                 }
+                install_nightly_targets(&missing_nightly_targets, config.silent)?;
             } else {
                 Err("Toolchains for some target platforms were missing!")?;
             }
@@ -227,7 +235,15 @@ fn run_for_crate(
 
     let crate_name = lib.name.replace('-', "_");
     for target in &targets {
-        build_with_output(target, &crate_name, mode, lib_type, config, &features)?;
+        build_with_output(
+            target,
+            &crate_name,
+            mode,
+            lib_type,
+            config,
+            &features,
+            &toolchain_targets,
+        )?;
     }
 
     let ffi_module_name =
@@ -419,41 +435,46 @@ fn prompt_platforms(accept_all: bool) -> Vec<PlatformSpec> {
         .collect()
 }
 
-/// Checks if toolchains for all target architectures are installed and returns a
-/// list containing the names of all missing toolchains
-fn check_installed_toolchains(targets: &[Target]) -> Vec<&'static str> {
-    let mut rustup = command!("rustup target list");
-    rustup.stdout(Stdio::piped());
-    let output = rustup
-        .execute_output()
-        .expect("Failed to check installed toolchains. Is rustup installed on your system?");
-    let output = String::from_utf8_lossy(&output.stdout);
-
-    let installed: Vec<_> = output
-        .split('\n')
-        .filter(|s| s.contains("installed"))
-        .map(|s| s.replace("(installed)", "").trim().to_owned())
-        .collect();
-
+/// Checks if toolchains for all tier 1/2 target architectures are installed on the
+/// default (stable) toolchain and returns a list of missing ones.
+fn check_stable_missing_targets(
+    targets: &[Target],
+    toolchain_targets: &ToolchainTargets,
+) -> Vec<&'static str> {
     targets
         .iter()
-        .filter(|t| !t.platform().is_tier_3())
         .flat_map(|t| t.architectures())
-        .filter(|arch| {
-            !installed
-                .iter()
-                .any(|toolchain| toolchain.eq_ignore_ascii_case(arch))
-        })
+        .filter(|arch| toolchain_targets.is_stable_missing(arch))
         .collect()
 }
 
-/// Checks if rust-src component for tier 3 targets are installed
-fn check_nightly_installed(targets: &[Target]) -> Vec<&'static str> {
-    if !targets.iter().any(|t| t.platform().is_tier_3()) {
+/// Checks if targets that are only available on nightly (tier 2 on nightly, tier 3 on stable)
+/// are installed on the nightly toolchain.
+fn check_nightly_missing_targets(
+    targets: &[Target],
+    toolchain_targets: &ToolchainTargets,
+) -> Vec<&'static str> {
+    targets
+        .iter()
+        .flat_map(|t| t.architectures())
+        .filter(|arch| toolchain_targets.is_nightly_missing(arch))
+        .collect()
+}
+
+/// Checks if rust-src component for tier 3 targets (needing -Z build-std) is installed
+fn check_nightly_src_installed(
+    targets: &[Target],
+    toolchain_targets: &ToolchainTargets,
+) -> Vec<&'static str> {
+    let has_build_std = targets
+        .iter()
+        .flat_map(|t| t.architectures())
+        .any(|arch| toolchain_targets.needs_build_std(arch));
+
+    if !has_build_std {
         return vec![];
     }
 
-    // TODO: Check if the correct nightly toolchain itself is installed
     let mut rustup = command("rustup component list --toolchain nightly");
     rustup.stdout(Stdio::piped());
     // HACK: Silence error that toolchain is not installed
@@ -521,6 +542,38 @@ fn install_toolchains(toolchains: &[&str], silent: bool) -> Result<()> {
         install
             .execute()
             .map_err(|e| format!("Error while downloading toolchain {toolchain}: \n\t{e}"))?;
+
+        step.finish();
+    }
+    spinner.finish();
+
+    Ok(())
+}
+
+/// Attempts to install the given targets on the nightly toolchain
+fn install_nightly_targets(toolchains: &[&str], silent: bool) -> Result<()> {
+    if toolchains.is_empty() {
+        return Ok(());
+    };
+
+    let multi = silent.not().then(MultiProgress::new);
+    let spinner = silent
+        .not()
+        .then(|| MainSpinner::with_message("Installing Nightly Targets...".to_owned()));
+    multi.add(&spinner);
+    spinner.start();
+    for toolchain in toolchains {
+        let mut install = Command::new("rustup");
+        install.args(["target", "install", toolchain, "--toolchain", "nightly"]);
+        install.stdin(Stdio::null());
+
+        let step = silent.not().then(|| CommandSpinner::with_command(&install));
+        multi.add(&step);
+        step.start();
+
+        install
+            .execute()
+            .map_err(|e| format!("Error while installing nightly target {toolchain}: \n\t{e}"))?;
 
         step.finish();
     }
@@ -638,8 +691,9 @@ fn build_with_output(
     lib_type: LibType,
     config: &Config,
     features: &FeatureOptions,
+    toolchain_targets: &ToolchainTargets,
 ) -> Result<()> {
-    let mut commands = target.commands(lib_name, mode, lib_type, features);
+    let mut commands = target.commands(lib_name, mode, lib_type, features, toolchain_targets);
     for command in &mut commands {
         command.env("CARGO_TERM_COLOR", "always");
     }
