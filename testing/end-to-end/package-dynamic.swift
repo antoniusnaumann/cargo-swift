@@ -38,7 +38,41 @@ cargoToml = cargoToml.replacingOccurrences(
     of: "crate-type = [\"staticlib\", \"lib\"]",
     with: "crate-type = [\"cdylib\", \"lib\"]"
 )
+// Make this a multi-crate (multi-component) build: add a second UniFFI crate as a path
+// dependency + workspace member. This exercises the framework-module-per-component path.
+cargoToml = cargoToml.replacingOccurrences(
+    of: "[dependencies]\n",
+    with: "[dependencies]\ndep_crate = { path = \"dep_crate\" }\n"
+)
+cargoToml += "\n[workspace]\nmembers = [\"dep_crate\"]\n"
 try! cargoToml.write(toFile: cargoTomlPath, atomically: true, encoding: .utf8)
+
+// Second component: its own crate with setup_scaffolding!() (a separate UniFFI namespace).
+print("Adding second crate (dep_crate)...")
+try! FileManager.default.createDirectory(
+    atPath: "\(projectName)/dep_crate/src", withIntermediateDirectories: true
+)
+try! """
+[package]
+name = "dep_crate"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+uniffi = "0.31"
+""".write(toFile: "\(projectName)/dep_crate/Cargo.toml", atomically: true, encoding: .utf8)
+try! """
+uniffi::setup_scaffolding!();
+
+#[uniffi::export]
+pub fn dep_hello() -> String { "dep".to_string() }
+""".write(toFile: "\(projectName)/dep_crate/src/lib.rs", atomically: true, encoding: .utf8)
+
+// Reference dep_crate from the main crate so its component is linked into the cdylib.
+let mainLibPath = "\(projectName)/src/lib.rs"
+var mainLib = try! String(contentsOfFile: mainLibPath, encoding: .utf8)
+mainLib += "\n#[uniffi::export]\npub fn dep_passthrough() -> String { dep_crate::dep_hello() }\n"
+try! mainLib.write(toFile: mainLibPath, atomically: true, encoding: .utf8)
 
 // Add uniffi.toml with custom ffi_module_name
 print("Adding uniffi.toml with custom ffi_module_name...")
@@ -277,6 +311,50 @@ for subframework in subframeworks {
     }
     print("  \(subframework): install name OK")
 }
+
+// --- Multi-crate regression checks (#97/#99/#100) ---
+// The bundle must expose exactly one framework module (named after the bundle), not one per
+// component, and every generated Swift file must import that single module.
+print("Checking merged framework module...")
+for subframework in subframeworks {
+    let frameworkPath = "\(xcframeworkPath)/\(subframework)/\(xcFrameworkName).framework"
+    let shallow = "\(frameworkPath)/Modules/module.modulemap"
+    let versioned = "\(frameworkPath)/Versions/A/Modules/module.modulemap"
+    let mmPath = fileExists(atPath: shallow) ? shallow : versioned
+    let mm = (try? String(contentsOfFile: mmPath, encoding: .utf8)) ?? ""
+    let moduleCount = mm.components(separatedBy: "framework module ").count - 1
+    guard moduleCount == 1 else {
+        error("\(subframework): expected exactly 1 framework module, found \(moduleCount)\n\(mm)")
+        exit(1)
+    }
+}
+
+// There must be >=2 component Swift files (multi-crate), all importing the single module.
+let sourcesDir = "\(projectName)/\(packageName)/Sources/\(packageName)"
+let swiftFiles = try! FileManager.default.contentsOfDirectory(atPath: sourcesDir)
+    .filter { $0.hasSuffix(".swift") }
+guard swiftFiles.count >= 2 else {
+    error("Expected >=2 component Swift files (multi-crate), found \(swiftFiles)")
+    exit(1)
+}
+
+// Type-check the generated sources the way Xcode resolves framework modules: by bundle name,
+// via -F. `swift build` loads the modulemap directly and does not surface this, so -F
+// resolution is what guards it. (#97/#99)
+print("Type-checking generated sources with -F (Xcode-style framework resolution)...")
+let macosSlice = subframeworks.first { $0.hasPrefix("macos") }!
+let swiftc = Process()
+swiftc.executableURL = URL(fileURLWithPath: "/usr/bin/env")
+swiftc.arguments = ["swiftc", "-typecheck", "-module-name", packageName,
+                    "-F", "\(xcframeworkPath)/\(macosSlice)"]
+    + swiftFiles.map { "\(sourcesDir)/\($0)" }
+try! swiftc.run()
+swiftc.waitUntilExit()
+guard swiftc.terminationStatus == 0 else {
+    error("swiftc -F failed: generated sources do not resolve under Xcode-style framework module resolution")
+    exit(1)
+}
+print("  -F resolution OK")
 
 // Build the Swift package to verify it links correctly
 print("Building Swift package...")
