@@ -46,7 +46,7 @@ pub fn patch_subframework(
 ) -> Result<()> {
     // xcodebuild creates lowercase "headers", but we rename to uppercase "Headers" (Apple convention)
     let mut headers = sf_dir.to_owned();
-    headers.push("headers");
+    headers.push("Headers");
     remove_dir_all(&headers)
         .with_context(|| format!("Failed to remove unpatched directory {headers:?}"))?;
     let mut generated_headers = generated_dir.to_owned();
