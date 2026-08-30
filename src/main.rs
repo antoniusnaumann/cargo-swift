@@ -144,6 +144,19 @@ enum Action {
         /// Universal slices with one remaining arch collapse to a single-arch
         /// slice; slices with no remaining archs drop out entirely.
         exclude_arch: Vec<String>,
+
+        #[arg(long = "debug-symbols")]
+        /// Embed .dSYM debug-symbol bundles in the xcframework so Xcode and
+        /// crash-symbolication tools can resolve Rust stack frames at runtime.
+        /// Requires Cargo profile flags that produce dSYMs — typically:
+        ///     [profile.release]
+        ///     debug = "limited"
+        ///     split-debuginfo = "packed"
+        /// (cargo runs dsymutil at link time, writing
+        /// target/<arch>/<mode>/deps/lib<name>.dylib.dSYM). cargo-swift then
+        /// lipo's the per-arch DWARF binaries to match each xcframework slice
+        /// and passes them to `xcodebuild -create-xcframework -debug-symbols`.
+        debug_symbols: bool,
     },
 }
 
@@ -177,6 +190,7 @@ fn main() -> ExitCode {
             privacy_manifest,
             bundle_identifier,
             exclude_arch,
+            debug_symbols,
         } => package::run(
             platforms,
             target.as_deref(),
@@ -196,6 +210,7 @@ fn main() -> ExitCode {
             privacy_manifest,
             bundle_identifier,
             exclude_arch,
+            debug_symbols,
         ),
     };
 

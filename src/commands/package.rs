@@ -72,6 +72,7 @@ pub fn run(
     privacy_manifest: Option<PathBuf>,
     bundle_identifier: Option<String>,
     exclude_arch: Vec<String>,
+    debug_symbols: bool,
 ) -> Result<()> {
     // Show deprecation warning if --xcframework-name is used
     if xcframework_name.is_some() {
@@ -105,6 +106,7 @@ pub fn run(
             privacy_manifest.as_deref(),
             bundle_identifier,
             &exclude_arch,
+            debug_symbols,
         );
     } else if package_name.is_some() {
         Err("Package name can only be specified when building a single crate!")?;
@@ -130,6 +132,7 @@ pub fn run(
                 privacy_manifest.as_deref(),
                 bundle_identifier.clone(),
                 &exclude_arch,
+                debug_symbols,
             )
         })
         .filter_map(|result| result.err())
@@ -154,6 +157,7 @@ fn run_for_crate(
     privacy_manifest: Option<&Path>,
     bundle_identifier: Option<String>,
     exclude_arch: &[String],
+    debug_symbols: bool,
 ) -> Result<()> {
     let lib = current_crate
         .targets
@@ -325,6 +329,7 @@ fn run_for_crate(
         config,
         privacy_manifest,
         bundle_identifier.as_deref(),
+        debug_symbols,
     )?;
     create_package_with_output(
         &package_name,
@@ -798,6 +803,7 @@ fn create_xcframework_with_output(
     config: &Config,
     privacy_manifest: Option<&Path>,
     bundle_identifier: Option<&str>,
+    debug_symbols: bool,
 ) -> Result<()> {
     run_step(config, "Creating XCFramework...", || {
         // TODO: show command spinner here with xcbuild command
@@ -816,6 +822,7 @@ fn create_xcframework_with_output(
             lib_type,
             privacy_manifest,
             bundle_identifier,
+            debug_symbols,
         )
     })
     .map_err(|e| format!("Failed to create XCFramework due to the following error: \n {e}").into())

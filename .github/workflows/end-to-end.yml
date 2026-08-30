@@ -14,7 +14,7 @@ jobs:
     strategy:
       matrix:
         os: [macos-latest, macos-14]
-        test: [init, package, package-dynamic, exclude-arch]
+        test: [init, package, package-dynamic, exclude-arch, debug-symbols]
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v4

@@ -1,6 +1,7 @@
 use crate::console::Error;
 use crate::lib_type::LibType;
-use crate::targets::ApplePlatform;
+use crate::metadata::{metadata, MetadataExt};
+use crate::targets::{library_file_name, ApplePlatform};
 use crate::{Mode, Result, Target};
 use anyhow::{anyhow, Context};
 use std::fs::{self, remove_dir_all, DirEntry};
@@ -304,6 +305,174 @@ fn create_versioned_symlinks(framework_dir: &Path, framework_name: &str) -> Resu
     Ok(())
 }
 
+/// Per-arch dSYM location produced by Cargo when `[profile.<mode>]` has
+/// `debug = "limited"` (or higher) + `split-debuginfo = "packed"` on macOS:
+/// Cargo invokes dsymutil during the link, dropping a bundle next to the dylib.
+fn arch_dsym_path(arch: &str, lib_name: &str, mode: Mode) -> PathBuf {
+    let target_dir = metadata().target_dir();
+    let mode_dir = match mode {
+        Mode::Debug => "debug",
+        Mode::Release => "release",
+    };
+    let dsym_name = format!("{}.dSYM", library_file_name(lib_name, LibType::Dynamic));
+    PathBuf::from(format!("{target_dir}/{arch}/{mode_dir}/deps/{dsym_name}"))
+}
+
+/// Materialise a dSYM bundle that matches a Target's framework binary:
+/// - Single-arch targets: copy the per-arch dSYM with its DWARF Mach-O renamed
+///   to `<framework_name>`.
+/// - Universal targets: `lipo -create` the per-arch DWARF Mach-Os into a fat
+///   binary at the renamed location. The result's embedded UUIDs cover every
+///   arch in the corresponding framework binary, so Xcode auto-loads symbols
+///   regardless of which slice the consumer is running.
+///
+/// Returns the staged dSYM path, ready to pass to
+/// `xcodebuild -create-xcframework -debug-symbols`. The staged bundle is named
+/// `<framework_name>.framework.dSYM` with the inner DWARF binary renamed to
+/// `<framework_name>` so xcodebuild can match it to the framework slice and
+/// drop it into `<slice>/dSYMs/` with the canonical name Xcode/App Store
+/// Connect expects.
+fn prepare_target_dsym(
+    target: &Target,
+    lib_name: &str,
+    framework_name: &str,
+    mode: Mode,
+    staging_dir: &Path,
+) -> Result<PathBuf> {
+    let arches = target.architectures();
+    let per_arch_dsyms: Vec<PathBuf> = arches
+        .iter()
+        .map(|arch| arch_dsym_path(arch, lib_name, mode))
+        .collect();
+
+    let missing: Vec<&PathBuf> = per_arch_dsyms.iter().filter(|p| !p.exists()).collect();
+    if !missing.is_empty() {
+        return Err(anyhow!(
+            "--debug-symbols was passed but no .dSYM was found for target '{}'.\n\
+             Expected dSYMs at:\n  {}\n\
+             Enable debug info on the Cargo profile, e.g. add to [profile.{}]:\n\
+                 debug = \"limited\"\n\
+                 split-debuginfo = \"packed\"",
+            target.display_name(),
+            missing
+                .iter()
+                .map(|p| p.display().to_string())
+                .collect::<Vec<_>>()
+                .join("\n  "),
+            match mode {
+                Mode::Debug => "dev",
+                Mode::Release => "release",
+            },
+        )
+        .into());
+    }
+
+    let src_dwarf_name = library_file_name(lib_name, LibType::Dynamic);
+    // Per-target subdir avoids collisions when multiple targets stage a
+    // `<framework_name>.framework.dSYM` simultaneously.
+    let target_key = match target {
+        Target::Universal { universal_name, .. } => (*universal_name).to_string(),
+        Target::Single { architecture, .. } => (*architecture).to_string(),
+    };
+    let staged = staging_dir
+        .join(target_key)
+        .join(format!("{framework_name}.framework.dSYM"));
+    if staged.exists() {
+        remove_dir_all(&staged)
+            .with_context(|| format!("Failed to clean stale staged dSYM {staged:?}"))?;
+    }
+
+    // Copy the first per-arch dSYM as a template (gives us the bundle wrapper,
+    // Info.plist, and resource layout). We then rename the DWARF Mach-O and
+    // (for universal targets) overwrite it with the lipo'd fat binary.
+    copy_dir_recursively(&per_arch_dsyms[0], &staged)
+        .with_context(|| format!("Failed to stage dSYM from {:?}", per_arch_dsyms[0]))?;
+
+    let dwarf_dir = staged.join("Contents/Resources/DWARF");
+    let staged_dwarf_src = dwarf_dir.join(&src_dwarf_name);
+    let staged_dwarf_dst = dwarf_dir.join(framework_name);
+    if staged_dwarf_src.exists() {
+        fs::rename(&staged_dwarf_src, &staged_dwarf_dst).with_context(|| {
+            format!(
+                "Failed to rename DWARF Mach-O from {staged_dwarf_src:?} to {staged_dwarf_dst:?}"
+            )
+        })?;
+    }
+
+    // Rewrite CFBundleIdentifier so the dSYM Info.plist reports the framework
+    // identifier (com.apple.xcode.dsym.<framework>.framework) instead of the
+    // value cargo's dsymutil inherited from the raw .dylib build artifact
+    // (com.apple.xcode.dsym.lib<crate>.dylib). Symbolication keys on Mach-O
+    // UUIDs, so this is cosmetic — but it's what Apple's tooling emits for
+    // archive-built frameworks and what crash-reporter vendors expect.
+    let info_plist = staged.join("Contents/Info.plist");
+    if info_plist.exists() {
+        let bundle_id = format!("com.apple.xcode.dsym.{framework_name}.framework");
+        let status = Command::new("plutil")
+            .args(["-replace", "CFBundleIdentifier", "-string"])
+            .arg(&bundle_id)
+            .arg(&info_plist)
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .status()
+            .context("Failed to run plutil on dSYM Info.plist")?;
+        if !status.success() {
+            return Err(anyhow!(
+                "plutil failed rewriting CFBundleIdentifier in {info_plist:?}"
+            )
+            .into());
+        }
+    }
+
+    if per_arch_dsyms.len() > 1 {
+        let mut lipo = Command::new("lipo");
+        for d in &per_arch_dsyms {
+            lipo.arg(d.join("Contents/Resources/DWARF").join(&src_dwarf_name));
+        }
+        lipo.arg("-create").arg("-output").arg(&staged_dwarf_dst);
+
+        let lipo_out = lipo
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .output()
+            .context("Failed to invoke lipo on dSYM DWARF binaries")?;
+        if !lipo_out.status.success() {
+            return Err(anyhow!(
+                "lipo failed combining dSYMs for target '{}': {}",
+                target.display_name(),
+                String::from_utf8_lossy(&lipo_out.stderr)
+            )
+            .into());
+        }
+    }
+
+    Ok(staged)
+}
+
+/// Minimal recursive copy. dSYMs are plain directory trees of files and
+/// (occasionally) symlinks; no special-casing needed for Resource forks etc.
+fn copy_dir_recursively(src: &Path, dst: &Path) -> Result<()> {
+    fs::create_dir_all(dst).with_context(|| format!("Failed to create {dst:?}"))?;
+    for entry in fs::read_dir(src).with_context(|| format!("Failed to read {src:?}"))? {
+        let entry = entry?;
+        let file_type = entry.file_type()?;
+        let dst_entry = dst.join(entry.file_name());
+        if file_type.is_dir() {
+            copy_dir_recursively(&entry.path(), &dst_entry)?;
+        } else if file_type.is_symlink() {
+            let link_target = fs::read_link(entry.path())?;
+            symlink(link_target, &dst_entry).with_context(|| {
+                format!("Failed to recreate symlink at {dst_entry:?}")
+            })?;
+        } else {
+            fs::copy(entry.path(), &dst_entry).with_context(|| {
+                format!("Failed to copy {:?} → {dst_entry:?}", entry.path())
+            })?;
+        }
+    }
+    Ok(())
+}
+
 #[allow(clippy::too_many_arguments)]
 pub fn create_xcframework(
     targets: &[Target],
@@ -316,12 +485,30 @@ pub fn create_xcframework(
     lib_type: LibType,
     privacy_manifest: Option<&Path>,
     bundle_identifier: Option<&str>,
+    debug_symbols: bool,
 ) -> Result<()> {
     let output_dir_name = &output_dir
         .to_str()
         .ok_or(anyhow!("Output directory has an invalid name!"))?;
 
     let framework = format!("{output_dir_name}/{xcframework_name}.xcframework");
+
+    // Stage dSYMs under cargo's target dir so they're cheaply cleanup-able and
+    // don't pollute the package output. xcodebuild copies them into the
+    // xcframework, so the staging dir is only needed during this invocation.
+    let dsym_staging: Option<PathBuf> = if debug_symbols {
+        let target_dir = metadata().target_dir();
+        let dir = PathBuf::from(format!("{target_dir}/.cargo-swift-dsyms/{xcframework_name}"));
+        if dir.exists() {
+            remove_dir_all(&dir)
+                .with_context(|| format!("Failed to clean stale dSYM staging dir {dir:?}"))?;
+        }
+        fs::create_dir_all(&dir)
+            .with_context(|| format!("Failed to create dSYM staging dir {dir:?}"))?;
+        Some(dir)
+    } else {
+        None
+    };
 
     let mut xcodebuild = Command::new("xcodebuild");
     xcodebuild.arg("-create-xcframework");
@@ -338,11 +525,21 @@ pub fn create_xcframework(
                 .to_str()
                 .ok_or(anyhow!("Directory for bindings has an invalid name!"))?;
 
-            for lib in &libs {
+            for (target, lib) in targets.iter().zip(libs.iter()) {
                 xcodebuild.arg("-library");
                 xcodebuild.arg(lib);
                 xcodebuild.arg("-headers");
                 xcodebuild.arg(headers);
+                if let Some(staging) = &dsym_staging {
+                    let dsym =
+                        prepare_target_dsym(target, lib_name, xcframework_name, mode, staging)?;
+                    // xcodebuild rejects relative paths for -debug-symbols.
+                    let dsym = dsym
+                        .canonicalize()
+                        .with_context(|| format!("Failed to canonicalize dSYM {dsym:?}"))?;
+                    xcodebuild.arg("-debug-symbols");
+                    xcodebuild.arg(&dsym);
+                }
             }
         }
         LibType::Dynamic => {
@@ -372,6 +569,16 @@ pub fn create_xcframework(
 
                 xcodebuild.arg("-framework");
                 xcodebuild.arg(&fw_path);
+                if let Some(staging) = &dsym_staging {
+                    let dsym =
+                        prepare_target_dsym(target, lib_name, xcframework_name, mode, staging)?;
+                    // xcodebuild rejects relative paths for -debug-symbols.
+                    let dsym = dsym
+                        .canonicalize()
+                        .with_context(|| format!("Failed to canonicalize dSYM {dsym:?}"))?;
+                    xcodebuild.arg("-debug-symbols");
+                    xcodebuild.arg(&dsym);
+                }
             }
         }
     }
@@ -382,6 +589,11 @@ pub fn create_xcframework(
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .output()?;
+
+    // Best-effort cleanup of the staging dir regardless of xcodebuild's outcome.
+    if let Some(staging) = &dsym_staging {
+        let _ = remove_dir_all(staging);
+    }
 
     if !output.status.success() {
         Err(output.stderr.into())
