@@ -18,6 +18,7 @@ jobs:
             "./swift-examples/hello-world/greeter",
             "./swift-examples/hello-world-macro/greeter",
             "./swift-examples/hello-world-macro-multi-crate/greeter",
+            "./swift-examples/hello-world-platform-specific/greeter",
           ]
         target: [
             "platform=macOS,arch=x86_64",
