@@ -10,9 +10,9 @@ crate-type = ["{{ lib_type }}", "lib"]
 name = "{{ namespace }}"
 
 [dependencies]
-uniffi = "0.31"
+uniffi = "0.32"
 
 {% if !macro_only %}
 [build-dependencies]
-uniffi = { version = "0.31", features = ["build"] }
+uniffi = { version = "0.32", features = ["build"] }
 {%- endif %}
