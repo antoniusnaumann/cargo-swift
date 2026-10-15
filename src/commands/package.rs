@@ -13,6 +13,7 @@ use execute::{command, Execute};
 use indicatif::MultiProgress;
 
 use crate::bindings::generate_bindings;
+use crate::bindings::{find_swift_format, format_swift_sources_command};
 use crate::console::*;
 use crate::console::{run_step, run_step_with_commands};
 use crate::lib_type::LibType;
@@ -300,6 +301,16 @@ fn run_for_crate(
 
     let ffi_module_name =
         generate_bindings_with_output(&targets, &crate_name, mode, lib_type, config)?;
+
+    if let Some(swift_format) = find_swift_format() {
+        // Formatting is cosmetic, so a failure should not abort packaging
+        let result = format_swift_sources_command(&swift_format).and_then(|command| {
+            run_step_with_commands(config, "Formatting Swift bindings...", &mut [command])
+        });
+        if let Err(e) = result {
+            warning!(config, "Could not format Swift bindings with swift-format: {e}");
+        }
+    }
 
     // Use the FFI module name as the xcframework name by default
     let xcframework_name = xcframework_name.unwrap_or_else(|| ffi_module_name.clone());

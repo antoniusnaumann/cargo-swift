@@ -2,6 +2,8 @@ use std::{
     fs::{self, create_dir},
     io::{self, Write},
 };
+use std::path::{Path, PathBuf};
+use std::process::{Command, Stdio};
 
 use anyhow::anyhow;
 use crate::Result;
@@ -9,6 +11,55 @@ use camino::Utf8Path;
 use uniffi_bindgen::bindings::{GenerateOptions, TargetLanguage};
 
 use crate::recreate_dir;
+
+/// Returns the path to Apple's `swift-format`, either from `PATH` or from the Xcode toolchain.
+pub fn find_swift_format() -> Option<PathBuf> {
+    let on_path = Command::new("swift-format")
+        .arg("--version")
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .status()
+        .is_ok_and(|status| status.success());
+
+    if on_path {
+        Some(PathBuf::from("swift-format"))
+    } else {
+        let output = Command::new("xcrun")
+            .args(["--find", "swift-format"])
+            .stderr(Stdio::null())
+            .output()
+            .ok()?;
+        let path = String::from_utf8(output.stdout).ok()?;
+        let path = path.trim();
+
+        if output.status.success() && !path.is_empty() {
+            Some(PathBuf::from(path))
+        } else {
+            None
+        }
+    }
+}
+
+/// Returns the `swift-format` command that formats the generated Swift sources in place.
+///
+/// `swift-format` picks up a `.swift-format` configuration from the project, if present.
+pub fn format_swift_sources_command(swift_format: &Path) -> Result<Command> {
+    let sources_dir = Path::new("./generated/sources");
+    let mut files = Vec::new();
+    for entry in fs::read_dir(sources_dir)? {
+        let path = entry?.path();
+        if path.extension().is_some_and(|ext| ext == "swift") {
+            files.push(path);
+        }
+    }
+
+    let mut command = Command::new(swift_format);
+    command
+        .args(["format", "--in-place", "--parallel"])
+        .args(&files);
+
+    Ok(command)
+}
 
 /// Generates UniFFI bindings for crate and returns the FFI module name.
 ///
