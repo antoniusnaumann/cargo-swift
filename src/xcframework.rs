@@ -4,6 +4,7 @@ use crate::targets::ApplePlatform;
 use crate::{Mode, Result, Target};
 use anyhow::{anyhow, Context};
 use std::fs::{self, remove_dir_all, DirEntry};
+use std::io::{Read, Seek, SeekFrom};
 use std::os::unix::fs::symlink;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
@@ -376,15 +377,23 @@ pub fn create_xcframework(
         }
     }
 
-    let output = xcodebuild
+    // We have to use a temp file here because a pipe leads to a deadlock
+    // (with `status()` nothing drains the pipe, so xcodebuild blocks once its
+    // stderr exceeds the OS pipe buffer).
+    let mut stderr = tempfile::tempfile()?;
+    let status = xcodebuild
         .arg("-output")
         .arg(&framework)
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .output()?;
+        .stdin(Stdio::null())
+        .stdout(Stdio::null())
+        .stderr(stderr.try_clone()?)
+        .status()?;
 
-    if !output.status.success() {
-        Err(output.stderr.into())
+    if !status.success() {
+        let mut message = Vec::new();
+        stderr.seek(SeekFrom::Start(0))?;
+        stderr.read_to_end(&mut message)?;
+        Err(message.into())
     } else {
         // Only patch headers for static libraries — for dynamic, headers are already
         // inside each .framework bundle and xcodebuild preserves them as-is.

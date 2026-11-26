@@ -24,6 +24,7 @@ convert_case = "0.11.0"
 glob = "0.3.2"
 nonempty = "0.12.0"
 serde = { version = "1.0.219", features = ["derive"] }
+tempfile = "3.24.0"
 
 # Templating
 askama = "0.15.0"
